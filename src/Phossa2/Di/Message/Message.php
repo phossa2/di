@@ -28,14 +28,14 @@ use Phossa2\Shared\Message\Message as BaseMessage;
 class Message extends BaseMessage
 {
     /*
-     * DI key "%s" is not valid
+     * Container not found
      */
-    const DI_KEY_INVALID = 1606221007;
+    const DI_CONTAINER_NOTFOUND = 1607061007;
 
     /**
      * {@inheritDoc}
      */
     protected static $messages = [
-        self::DI_KEY_INVALID => 'Di key "%s" is not valid',
+        self::DI_CONTAINER_NOTFOUND => 'Container not found',
     ];
 }

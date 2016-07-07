@@ -12,18 +12,19 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Message;
+namespace Phossa2\Di\Exception;
 
-use Phossa2\Di\Message\Message;
-
-/*
- * Provide zh_CN translation
+/**
+ * LogicException for Phossa2\Di
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
+ * @see     \LogicException
+ * @see     ExceptionInterface
+ * @see     ContainerExceptionInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-return [
-    Message::DI_CONTAINER_NOTFOUND => '对象容器没有设置',
-];
+class LogicException extends \LogicException implements ExceptionInterface, ContainerExceptionInterface
+{
+}
