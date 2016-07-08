@@ -29,7 +29,7 @@ use Phossa2\Di\Exception\LogicException;
 interface ExtendedContainerInterface
 {
     /**
-     * Store the instance as $id
+     * Store the instance as $id, $id may have scope defined
      *
      *
      * @param  string $id

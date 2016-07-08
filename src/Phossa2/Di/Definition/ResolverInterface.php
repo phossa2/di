@@ -185,7 +185,7 @@ interface ResolverInterface
      * );
      *
      * // map a interface => a parameter reference
-     * $resolver->setMappingDefinition(
+     * $resolver->setMapping(
      *     'Phossa2\\Cache\\CachePoolInterface',
      *     '${cache.class}'
      * );

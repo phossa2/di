@@ -42,8 +42,9 @@ trait ScopeTrait
      */
     public function share(/*# bool */ $shared = true)
     {
-        $this->default_scope = (bool) $shared ? ScopeInterface::SCOPE_SHARED :
-            ScopeInterface::SCOPE_SINGLE;
+        $this->default_scope = (bool) $shared ?
+            ScopeInterface::SCOPE_SHARED :
+            ScopeInterface::SCOPE_SINGLE ;
         return $this;
     }
 
@@ -94,7 +95,7 @@ trait ScopeTrait
 
         // get the default scope for $rawId
         if (empty($scope)) {
-            $definition = $this->getResolver()->getServiceDefinition($rawId);
+            $definition = $this->getResolver()->getService($rawId);
             if (isset($definition['scope'])) {
                 $scope = $definition['scope'];
             } else {
@@ -103,18 +104,6 @@ trait ScopeTrait
         }
 
         return [$rawId, $scope];
-    }
-
-    /**
-     * Is $scopedId has __SINGLE__ scope ?
-     *
-     * @param  string $scopedId
-     * @return bool
-     * @access protected
-     */
-    protected function isSingleScoped(/*# string */ $scopedId)/*# : bool */
-    {
-        return ScopeInterface::SCOPE_SINGLE === $this->splitId($scopedId)[1];
     }
 
     /**

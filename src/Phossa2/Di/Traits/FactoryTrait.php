@@ -15,6 +15,7 @@
 namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Scope\ScopeTrait;
+use Phossa2\Di\Exception\LogicException;
 
 /**
  * FactoryTrait
@@ -35,4 +36,68 @@ trait FactoryTrait
      * @access protected
      */
     protected $loop = [];
+
+    /**
+     * Full scope info
+     *
+     * @param  sting $id
+     * @return array
+     * @access protected
+     */
+    protected function fullScopeInfo(/*# string */ $id)/*# : array */
+    {
+        list($rawId, $scope) = $this->scopedInfo($id);
+
+        // if $scope is upper level '#service_id'
+        if (isset($this->loop[$scope])) {
+            $scope .= '_' . $this->loop[$scope];
+        }
+
+        return [$rawId, $this->scopedId($rawId, $scope), $scope];
+    }
+
+    /**
+     * Create the instance
+     *
+     * @param  string $rawId
+     * @param  array $arguments
+     * @return object
+     * @throws LogicException if anything goes wrong
+     * @access protected
+     */
+    protected function factoryInstance(/*# string */ $rawId, array $arguments)
+    {
+        static $counter = 0;
+
+        // service id
+        $serviceId = $this->getServiceId($rawId);
+
+        // loop found
+        if (isset($this->loop[$serviceId])) {
+
+        }
+
+        // set loop marker
+        $this->loop[$serviceId] = ++$counter;
+
+        // create the service object
+        $obj = $this->createObject($rawId, $arguments);
+
+        // remove loop marker
+        unset($this->loop[$serviceId]);
+
+        return $obj;
+    }
+
+    /**
+     * Append '#' to rawId, representing a service object id
+     *
+     * @param  string $rawId
+     * @return string
+     * @access protected
+     */
+    protected function getServiceId(/*# string */ $rawId)/*# : string */
+    {
+        return '#' . $rawId;
+    }
 }

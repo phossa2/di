@@ -65,18 +65,19 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         Config $config = null,
         /*# string */ $nodeName = 'di'
     ) {
-        if (null === $config) {
-            $config = new Config();
-        }
-
         // setup the resolver
-        $this->setResolver(new Resolver($this, $config, $nodeName));
+        $this->setResolver(
+            new Resolver($this, $config ?: (new Config()), $nodeName)
+        );
 
         // execute init methods defined in 'di.init' node
         $this->initContainer($nodeName);
     }
 
     /**
+     * - Accepting second param as constructor arguments
+     * - Accpeting $id with scope like 'cache@myScope'
+     *
      * {@inheritDoc}
      */
     public function get($id)
@@ -97,13 +98,15 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     }
 
     /**
+     * - Accpeting $id with scope like 'cache@myScope'
+     *
      * {@inheritDoc}
      */
     public function has($id)
     {
         if (is_string($id)) {
             $rawId = $this->splitId($id)[0];
-            return $this->getResolver()->hasServiceDefinition($rawId);
+            return $this->getResolver()->hasService($rawId);
         }
         return false;
     }
@@ -117,19 +120,12 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
 
         // not defined
         if (!$this->has($id)) {
-            // fake a definition
-            $this->getResolver()->setDefinition($rawId, [
-                'class' => $object
-            ], 'service');
+            $this->getResolver()->setService($rawId, ['class' => $object]);
         }
 
         // non empty scope
         if (!empty($scope)) {
             $this->pool[$id] = $object;
-
-        // set to resolver
-        } else {
-            $this->getResolver()->setDefinition('#' . $rawId, $object);
         }
 
         return $this;
@@ -180,8 +176,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         $initNode = $nodeName . '.init';
 
         // has node defined
-        if ($this->getResolver()->hasDefinition($initNode)) {
-            $init = $this->getResolver()->getDefinition($initNode);
+        if ($this->getResolver()->has($initNode)) {
+            $init = $this->getResolver()->get($initNode);
             foreach ($init as $section => $methods) {
                 $this->batch($methods);
             }
@@ -200,7 +196,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     protected function getInstance(/*# string */ $id, array $args)
     {
         // get scoped id
-        $scopedId = $this->factoryScopedId($id);
+        list($rawId, $scopedId, $scope) = $this->fullScopeInfo($id);
 
         // try the pool
         if (empty($args) && isset($this->pool[$scopedId])) {
@@ -208,10 +204,10 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         }
 
         // create the instance
-        $obj = $this->factoryInstance($scopedId, $args);
+        $obj = $this->factoryInstance($rawId, $args);
 
         // cache it in the pool
-        if (empty($args) && !$this->isSingleScoped($scopedId)) {
+        if (empty($args) && ScopeInterface::SCOPE_SHARED !== $scope) {
             $this->pool[$scopedId] = $obj;
         }
 
