@@ -14,6 +14,8 @@
 
 namespace Phossa2\Di\Scope;
 
+use Phossa2\Di\Definition\ResolverInterface;
+
 /**
  * ScopeTrait
  *
@@ -56,8 +58,11 @@ trait ScopeTrait
      */
     protected function splitId(/*# string */ $id)/*# : array */
     {
-        $parts = explode('@', $id, 2);
-        return isset($parts[1]) ? $parts : [$parts[0], ''];
+        if (false !== strpos($id, '@')) {
+            return explode('@', $id, 2);
+        } else {
+            return [$id, ''];
+        }
     }
 
     /**
@@ -68,11 +73,52 @@ trait ScopeTrait
      * @return string
      * @access protected
      */
-    protected function appendScopeToId(
+    protected function scopedId(
         /*# string */ $id,
         /*# string */ $scope
     )/*# : string */ {
-        list($id, $oscope) = $this->splitId($id);
-        return $id . '@' . $scope;
+        return $this->splitId($id)[0] . '@' . $scope;
     }
+
+    /**
+     * Returns the raw id (without scope) and the scope
+     *
+     * @param  string $id
+     * @return array [rawId, scope]
+     * @access protected
+     */
+    protected function scopedInfo(/*# string */ $id)/*# : array */
+    {
+        // split into raw id and scope (if any)
+        list($rawId, $scope) = $this->splitId($id);
+
+        // get the default scope for $rawId
+        if (empty($scope)) {
+            $definition = $this->getResolver()->getServiceDefinition($rawId);
+            if (isset($definition['scope'])) {
+                $scope = $definition['scope'];
+            } else {
+                $scope = $this->default_scope;
+            }
+        }
+
+        return [$rawId, $scope];
+    }
+
+    /**
+     * Is $scopedId has __SINGLE__ scope ?
+     *
+     * @param  string $scopedId
+     * @return bool
+     * @access protected
+     */
+    protected function isSingleScoped(/*# string */ $scopedId)/*# : bool */
+    {
+        return ScopeInterface::SCOPE_SINGLE === $this->splitId($scopedId)[1];
+    }
+
+    /**
+     * @return ResolverInterface
+     */
+    abstract public function getResolver()/*# : ResolverInterface */;
 }

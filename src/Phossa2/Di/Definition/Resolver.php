@@ -18,7 +18,6 @@ use Phossa2\Config\Config;
 use Phossa2\Config\Delegator;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Interfaces\ContainerInterface;
-use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Shared\Reference\DelegatorAwareTrait;
 use Phossa2\Shared\Reference\DelegatorAwareInterface;
 
@@ -48,7 +47,7 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
      * @var    string
      * @access protected
      */
-    protected $node_base;
+    protected $base_node;
 
     /**
      * Autowiring ON or OFF
@@ -61,23 +60,23 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     /**
      * Create resolver with object resolving and reference resolving capability
      *
-     * @param  ContainerInterface $container
-     * @param  ConfigInterface $config
+     * @param  ContainerInterface $container object container
+     * @param  Config $config
      * @param  string $nodeName
      * @access public
      */
     public function __construct(
         ContainerInterface $container,
-        ConfigInterface $config,
+        Config $config,
         /*# string */ $nodeName = 'di'
     ) {
         // object and parameter resolver
         $this->setDelegator(
             (new Delegator())
-                // resolving '${#service_id}' object
+                // resolving '${#service_id}', non-writable
                 ->addRegistry(new ObjectResolver($container))
-                // resolving other '${parameter.name}' etc.
-                ->addRegistry($config)
+                // resolving other '${parameter.name}', writable
+                ->addRegistry($config->setWritable(true))
         );
 
         // di starting node in $config
@@ -87,51 +86,49 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     /**
      * {@inheritDoc}
      */
-    public function getDefinition(
+    public function get(
         /*# string */ $key,
         /*# string */ $section = ''
     ) {
-        return $this->getDelegator()->get($this->getKey($key, $section));
+        return $this->getDelegator()->get($this->generateKey($key, $section));
     }
 
     /**
      * {@inheritDoc}
      */
-    public function hasDefinition(
+    public function has(
         /*# string */ $key,
         /*# string */ $section = ''
     )/*# : bool */ {
-        return $this->getDelegator()->has($this->getKey($key, $section));
+        return $this->getDelegator()->has($this->generateKey($key, $section));
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setDefinition(
+    public function set(
         /*# string */ $key,
         $value,
         /*# string */ $section = ''
     ) {
-        $this->getDelegator()->set($this->getKey($key, $section), $value);
+        $this->getDelegator()->set($this->generateKey($key, $section), $value);
         return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getServiceDefinition(/*# string */ $serviceId)
+    public function getService(/*# string */ $key)
     {
-        return $this->getDefinition($serviceId, 'service');
+        return $this->get($key, 'service');
     }
 
     /**
      * {@inheritDoc}
      */
-    public function hasServiceDefinition(/*# string */ $serviceId)/*# : bool */
+    public function hasService(/*# string */ $key)/*# : bool */
     {
-        if ($this->hasDefinition($serviceId, 'service') ||
-            $this->autoClassName($serviceId)
-        ) {
+        if ($this->has($key, 'service') || $this->autoClassName($key)) {
             return true;
         }
         return false;
@@ -140,8 +137,8 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     /**
      * {@inheritDoc}
      */
-    public function setServiceDefinition(
-        /*# string */ $serviceId,
+    public function setService(
+        /*# string */ $key,
         $definition,
         array $arguments = []
     ) {
@@ -152,31 +149,31 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
             ];
         }
 
-        return $this->setDefinition($serviceId, $definition, 'service');
+        return $this->set($key, $definition, 'service');
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getMappingDefinition(/*# string */ $key)
+    public function getMapping(/*# string */ $key)
     {
-        return $this->getDefinition($key, 'mapping');
+        return $this->get($key, 'mapping');
     }
 
     /**
      * {@inheritDoc}
      */
-    public function hasMappingDefinition(/*# string */ $key)/*# : bool */
+    public function hasMapping(/*# string */ $key)/*# : bool */
     {
-        return $this->hasDefinition($key, 'mapping');
+        return $this->has($key, 'mapping');
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setMappingDefinition(/*# string */ $from, $to)
+    public function setMapping(/*# string */ $from, $to)
     {
-        return $this->setDefinition($from, $to, 'mapping');
+        return $this->set($from, $to, 'mapping');
     }
 
     /**
@@ -197,26 +194,26 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
      */
     protected function setBaseNode(/*# string */ $nodeName)
     {
-        $this->node_base = $nodeName;
+        $this->base_node = $nodeName;
         return $this;
     }
 
     /**
-     * Get key in $config tree
+     * Generate key base on section
      *
      * @param  string $key
      * @param  string $section
      * @return string
      * @access protected
      */
-    protected function getKey(
+    protected function generateKey(
         /*# string */ $key,
         /*# string */ $section = ''
     )/*# : string */ {
         if ('' === $section) {
             return $key;
         } else {
-            return $this->node_base . '.' . $section . '.' . $key;
+            return $this->base_node . '.' . $section . '.' . $key;
         }
     }
 
@@ -230,7 +227,7 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     protected function autoClassName(/*# string */ $id)/*# : bool */
     {
         if ($this->auto && class_exists($id)) {
-            $this->setServiceDefinition($id, ['class' => $id]);
+            $this->setService($id, ['class' => $id]);
             return true;
         }
         return false;

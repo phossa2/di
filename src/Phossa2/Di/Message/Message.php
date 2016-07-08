@@ -32,10 +32,16 @@ class Message extends BaseMessage
      */
     const DI_CONTAINER_NOTFOUND = 1607061007;
 
+    /*
+     * Service instance "%s" not found
+     */
+    const DI_SERVICE_NOTFOUND = 1607061008;
+
     /**
      * {@inheritDoc}
      */
     protected static $messages = [
         self::DI_CONTAINER_NOTFOUND => 'Container not found',
+        self::DI_SERVICE_NOTFOUND => 'Service instance "%s" not found',
     ];
 }

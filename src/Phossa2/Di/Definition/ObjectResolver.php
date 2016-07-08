@@ -65,14 +65,4 @@ class ObjectResolver implements ConfigInterface
         }
         return false;
     }
-
-    /**
-     * Immutable
-     *
-     * {@inheritDoc}
-     */
-    public function set(/*# string */ $key, $value)
-    {
-        return $this;
-    }
 }

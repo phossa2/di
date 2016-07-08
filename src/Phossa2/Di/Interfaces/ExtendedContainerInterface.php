@@ -29,6 +29,18 @@ use Phossa2\Di\Exception\LogicException;
 interface ExtendedContainerInterface
 {
     /**
+     * Store the instance as $id
+     *
+     *
+     * @param  string $id
+     * @param  string $object
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function set(/*# string */ $id, $object);
+
+    /**
      * Get a NEW service instance even if it was defined as shared
      *
      * Arguments can have references as follows

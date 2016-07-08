@@ -17,7 +17,7 @@ namespace Phossa2\Di\Definition;
 /**
  * ResolverInterface
  *
- * Definition resolver dealing with service/parameter/mapping definitions
+ * Definition resolver dealing with instance/parameter/mapping etc.
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
@@ -27,161 +27,161 @@ namespace Phossa2\Di\Definition;
 interface ResolverInterface
 {
     /**
-     * Get the definition from resolver
+     * Get $key from resolver
      *
      * Returns NULL if not found
      *
-     * @param  string $key
-     * @param  string $section section related to base node
+     * @param  string $key key/name
+     * @param  string $section section relative to the base node
      * @return mixed
      * @access public
      * @api
      */
-    public function getDefinition(
+    public function get(
         /*# string */ $key,
         /*# string */ $section = ''
     );
 
     /**
-     * Has the definition with name $key
+     * Has $key exists in resolver ?
      *
-     * @param  string $key parameter key/name
-     * @param  string $section section related to base node
+     * @param  string $key key/name
+     * @param  string $section section relative to the base node
      * @return bool
      * @access public
      * @api
      */
-    public function hasDefinition(
+    public function has(
         /*# string */ $key,
         /*# string */ $section = ''
     )/*# : bool */;
 
     /**
-     * Set/replace/delete parameter definition(s) in resolver
+     * Set/replace/delete $key in resolver
      *
      * ```php
      * // set a parameter
-     * $resolver->setDefinition('cache.root', '/var/tmp');
+     * $resolver->set('cache.root', '/var/tmp');
      *
      * // set with a reference
-     * $resolver->setDefinition('cache.root', '${tmp.dir}');
+     * $resolver->set('cache.root', '${tmp.dir}');
      *
      * // set with an array
-     * $resolver->setDefinition('cache', [
+     * $resolver->set('cache', [
      *     'root' => '/var/tmp',
      *     'name' => 'session_cache',
      *     'lifetime' => 86400
      * ]);
      * ```
      *
-     * @param  string $key parameter key/name
-     * @param  mixed $value NULL is allowed
-     * @param  string $section section related to base node
+     * @param  string $key key/name
+     * @param  mixed $value the value, NULL is allowed
+     * @param  string $section section relative to the base node
      * @return $this
      * @access public
      * @api
      */
-    public function setDefinition(
+    public function set(
         /*# string */ $key,
         $value,
         /*# string */ $section = ''
     );
 
     /**
-     * Get the service definition for a service id
+     * Get the $key in 'service' section
      *
-     * @param  string $serviceId
+     * @param  string $key key/name
      * @return mixed
      * @access public
      * @api
      */
-    public function getServiceDefinition(/*# string */ $serviceId);
+    public function getService(/*# string */ $key);
 
     /**
-     * Has the service definition with $serviceId
+     * Has the $key in 'service' section
      *
-     * @param  string $serviceId service id
+     * @param  string $key key/name
      * @return bool
      * @access public
      * @api
      */
-    public function hasServiceDefinition(/*# string */ $serviceId)/*# : bool */;
+    public function hasService(/*# string */ $key)/*# : bool */;
 
     /**
-     * Add/overwrite service definition(s)
+     * Add/overwrite in service section
      *
      * ```php
      * // define a service with classname
-     * $resolver->setServiceDefinition('cache', 'Phossa2\\Cache\\CachePool');
+     * $resolver->setService('cache', 'Phossa2\\Cache\\CachePool');
      *
      * // define a service with a closue
-     * $resolver->setServiceDefinition('cache', function() {
+     * $resolver->setService('cache', function() {
      *     return new \Phossa2\Cache\CachePool();
      * });
      *
      * // define with class name and constructor arguments
-     * $resolver->setServiceDefinition(
-     *     'cache', 'Phossa2\\Cache\\CachePool', ['${@driver}']
+     * $resolver->setService(
+     *     'cache', 'Phossa2\\Cache\\CachePool', ['${#driver}']
      * );
      *
      * // alias, pointing to another service
-     * $resolver->setServiceDefinition('sessionCache', '${@globalCache}');
+     * $resolver->setService('sessionCache', '${#globalCache}');
      *
      * // define service with a (pseudo) callable
-     * $resolver->setServiceDefinition('logger', [${@event}, 'getLogger']);
+     * $resolver->setService('logger', [${#event}, 'getLogger']);
      * ```
      *
-     * @param  string $serviceId service id
+     * @param  string $key key/name
      * @param  mixed $definition classname/callable/array/object etc.
      * @param  array $arguments constructor/callable arguments
      * @return $this
      * @access public
      * @api
      */
-    public function setServiceDefinition(
-        /*# string */ $serviceId,
+    public function setService(
+        /*# string */ $key,
         $definition,
         array $arguments = []
     );
 
     /**
-     * Get the mapping definition for $key
+     * Get the $key in 'mapping' section
      *
-     * @param  string $key mapping name
+     * @param  string $key key/name
      * @return mixed string or callable etc.
      * @access public
      * @api
      */
-    public function getMappingDefinition(/*# string */ $key);
+    public function getMapping(/*# string */ $key);
 
     /**
-     * Has the mapping definition for $key
+     * Has the $key in 'mapping' section
      *
-     * @param  string $key mapping name
+     * @param  string $key key/name
      * @return bool
      * @access public
      * @api
      */
-    public function hasMappingDefinition(/*# string */ $key)/*# : bool */;
+    public function hasMapping(/*# string */ $key)/*# : bool */;
 
     /**
      * Map an interface to a classname
      *
      * You may also map classname to child classname, map interface or
-     * classname to a service id reference '${@service_id}' or a parameter
+     * classname to a service id reference '${#service_id}' or a parameter
      * reference '${parameter.name}
      *
      * ```php
      * // map a interface => a classname
-     * $resolver->setMappingDefinition(
+     * $resolver->setMapping(
      *     'Phossa2\\Cache\\CachePoolInterface', // NO leading backslash
      *     'Phossa2\\Cache\\CachePool'
      * );
      *
      * // map a interface => service reference
-     * $resolver->setMappingDefinition(
+     * $resolver->setMapping(
      *     'Phossa2\\Cache\\CachePoolInterface',
-     *     '${@cache}'
+     *     '${#cache}'
      * );
      *
      * // map a interface => a parameter reference
@@ -191,7 +191,7 @@ interface ResolverInterface
      * );
      *
      * // map to a callable
-     * $resolver->setMappingDefinition(
+     * $resolver->setMapping(
      *     'Phossa2\\Cache\\CachePoolInterface',
      *     functino() {
      *         return new Phossa2\Cache\Cache();
@@ -200,12 +200,12 @@ interface ResolverInterface
      * ```
      *
      * @param  string $from interface or class name
-     * @param  $to class name/${@service_id}/${parameter} or even callback
+     * @param  $to class name/${#service_id}/${parameter} or even callback
      * @return $this
      * @access public
      * @api
      */
-    public function setMappingDefinition(/*# string */ $from, $to);
+    public function setMapping(/*# string */ $from, $to);
 
     /**
      * Turn on/off autowiring (auto classname resolving)

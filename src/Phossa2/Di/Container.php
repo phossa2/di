@@ -15,13 +15,15 @@
 namespace Phossa2\Di;
 
 use Phossa2\Config\Config;
-use Phossa2\Di\Scope\ScopeTrait;
+use Phossa2\Di\Message\Message;
+use Phossa2\Di\Traits\FactoryTrait;
 use Phossa2\Di\Definition\Resolver;
 use Phossa2\Di\Scope\ScopeInterface;
 use Phossa2\Shared\Base\ObjectAbstract;
+use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Exception\NotFoundException;
 use Phossa2\Di\Definition\ResolverAwareTrait;
 use Phossa2\Di\Interfaces\ContainerInterface;
-use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Di\Definition\ResolverAwareInterface;
 use Phossa2\Di\Interfaces\ExtendedContainerInterface;
 
@@ -38,7 +40,7 @@ use Phossa2\Di\Interfaces\ExtendedContainerInterface;
  */
 class Container extends ObjectAbstract implements ContainerInterface, ResolverAwareInterface, ScopeInterface, ExtendedContainerInterface
 {
-    use ResolverAwareTrait, ScopeTrait;
+    use ResolverAwareTrait, FactoryTrait;
 
     /**
      * services pool
@@ -49,31 +51,49 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     protected $pool = [];
 
     /**
-     * id cache for loop detection
-     *
-     * @var    array
-     * @access protected
-     */
-    protected $loop = [];
-
-    /**
      * Constructor
      *
+     * Inject a config instance which will provide configurations for all
+     * the parameters, references and container related service and mapping
+     * configurations
+     *
      * @param  Config $config
+     * @param  string $nodeName starting node in $config for the container
      * @access public
      */
     public function __construct(
-        ConfigInterface $config = null
+        Config $config = null,
+        /*# string */ $nodeName = 'di'
     ) {
-        // set definition/reference resolver
-        $this->setResolver(new Resolver($this, $config));
+        if (null === $config) {
+            $config = new Config();
+        }
+
+        // setup the resolver
+        $this->setResolver(new Resolver($this, $config, $nodeName));
+
+        // execute init methods defined in 'di.init' node
+        $this->initContainer($nodeName);
     }
 
     /**
-     * {@inheritDoc}.
+     * {@inheritDoc}
      */
     public function get($id)
     {
+        // not found
+        if (!$this->has($id)) {
+            throw new NotFoundException(
+                Message::get(Message::DI_SERVICE_NOTFOUND, $id),
+                Message::DI_SERVICE_NOTFOUND
+            );
+        }
+
+        // get the instance
+        return $this->getInstance(
+            $id,
+            func_num_args() > 1 ? func_get_arg(1) : []
+        );
     }
 
     /**
@@ -82,11 +102,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     public function has($id)
     {
         if (is_string($id)) {
-            // split id and scope
-            list($id, $scope) = $this->splitId($id);
-
-            // try definition
-            return $this->getResolver()->hasServiceDefinition($id);
+            $rawId = $this->splitId($id)[0];
+            return $this->getResolver()->hasServiceDefinition($rawId);
         }
         return false;
     }
@@ -94,9 +111,39 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * {@inheritDoc}
      */
+    public function set(/*# string */ $id, $object)
+    {
+        list($rawId, $scope) = $this->splitId($id);
+
+        // not defined
+        if (!$this->has($id)) {
+            // fake a definition
+            $this->getResolver()->setDefinition($rawId, [
+                'class' => $object
+            ], 'service');
+        }
+
+        // non empty scope
+        if (!empty($scope)) {
+            $this->pool[$id] = $object;
+
+        // set to resolver
+        } else {
+            $this->getResolver()->setDefinition('#' . $rawId, $object);
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function one(/*# string */ $id, array $arguments = [])
     {
-        return $this->get($id, $arguments, ScopeInterface::SCOPE_SINGLE);
+        return $this->get(
+            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE),
+            $arguments
+        );
     }
 
     /**
@@ -104,15 +151,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function run($callable, array $arguments = [])
     {
-        // dereference arguments
-        if (!empty($arguments)) {
-            $arguments = $this->resolve($arguments);
-        }
-
-        return call_user_func_array(
-            $this->resolve($callable),
-            $arguments
-        );
+        return $this->factoryCallable($callable, $arguments);
     }
 
     /**
@@ -126,5 +165,56 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
                 isset($mthd['args']) ? $mthd['args'] : []
             );
         }
+    }
+
+    /**
+     * Execute methods in the 'di.init' node
+     *
+     * @param  string $nodeName starting node for the container
+     * @return $this
+     * @access protected
+     */
+    protected function initContainer(/*# string */ $nodeName)
+    {
+        // node is 'di.init'
+        $initNode = $nodeName . '.init';
+
+        // has node defined
+        if ($this->getResolver()->hasDefinition($initNode)) {
+            $init = $this->getResolver()->getDefinition($initNode);
+            foreach ($init as $section => $methods) {
+                $this->batch($methods);
+            }
+        }
+    }
+
+    /**
+     * Get the instance either from the pool or create it
+     *
+     * @param  string $id
+     * @param  array $args
+     * @return object
+     * @throws LogicException if instantiation goes wrong
+     * @access protected
+     */
+    protected function getInstance(/*# string */ $id, array $args)
+    {
+        // get scoped id
+        $scopedId = $this->factoryScopedId($id);
+
+        // try the pool
+        if (empty($args) && isset($this->pool[$scopedId])) {
+            return $this->pool[$scopedId];
+        }
+
+        // create the instance
+        $obj = $this->factoryInstance($scopedId, $args);
+
+        // cache it in the pool
+        if (empty($args) && !$this->isSingleScoped($scopedId)) {
+            $this->pool[$scopedId] = $obj;
+        }
+
+        return $obj;
     }
 }
