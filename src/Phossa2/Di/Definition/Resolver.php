@@ -50,6 +50,14 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     protected $base_node;
 
     /**
+     * The parameter config object
+     *
+     * @var    Config
+     * @access protected
+     */
+    protected $config;
+
+    /**
      * Autowiring ON or OFF
      *
      * @var    bool
@@ -78,6 +86,9 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
                 // resolving other '${parameter.name}', writable
                 ->addRegistry($config->setWritable(true))
         );
+
+        // config
+        $this->config = $config;
 
         // di starting node in $config
         $this->setBaseNode($nodeName);
@@ -112,6 +123,15 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
         /*# string */ $section = ''
     ) {
         $this->getDelegator()->set($this->generateKey($key, $section), $value);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function resolve(&$toResolve)
+    {
+        $this->config->deReferenceArray($toResolve);
         return $this;
     }
 

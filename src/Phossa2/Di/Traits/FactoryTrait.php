@@ -14,8 +14,10 @@
 
 namespace Phossa2\Di\Traits;
 
+use Phossa2\Di\Message\Message;
 use Phossa2\Di\Scope\ScopeTrait;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Definition\ResolverAwareTrait;
 
 /**
  * FactoryTrait
@@ -27,7 +29,7 @@ use Phossa2\Di\Exception\LogicException;
  */
 trait FactoryTrait
 {
-    use ScopeTrait;
+    use ScopeTrait, ResolverAwareTrait;
 
     /**
      * for loop detection
@@ -48,7 +50,7 @@ trait FactoryTrait
     {
         list($rawId, $scope) = $this->scopedInfo($id);
 
-        // if $scope is upper level '#service_id'
+        // if $scope is a '#service_id'
         if (isset($this->loop[$scope])) {
             $scope .= '_' . $this->loop[$scope];
         }
@@ -57,7 +59,7 @@ trait FactoryTrait
     }
 
     /**
-     * Create the instance
+     * Create the instance with loop detection built-in
      *
      * @param  string $rawId
      * @param  array $arguments
@@ -65,28 +67,153 @@ trait FactoryTrait
      * @throws LogicException if anything goes wrong
      * @access protected
      */
-    protected function factoryInstance(/*# string */ $rawId, array $arguments)
-    {
+    protected function createInstance(
+        /*# string */ $rawId,
+        array $arguments = []
+    ) {
         static $counter = 0;
 
         // service id
         $serviceId = $this->getServiceId($rawId);
 
-        // loop found
+        // loop detected
         if (isset($this->loop[$serviceId])) {
-
+            throw new LogicException(
+                Message::get(Message::DI_LOOP_DETECTED, $rawId),
+                Message::DI_LOOP_DETECTED
+            );
         }
 
         // set loop marker
         $this->loop[$serviceId] = ++$counter;
 
         // create the service object
-        $obj = $this->createObject($rawId, $arguments);
+        $obj = $this->createFromId($rawId, $arguments);
 
         // remove loop marker
         unset($this->loop[$serviceId]);
 
         return $obj;
+    }
+
+    /**
+     * Create object base on the id
+     *
+     * @param  string $rawId
+     * @param  array $args if any new args provided
+     * @return object
+     * @access protected
+     */
+    protected function createFromId(
+        /*# string */ $rawId,
+        array $args
+    ) {
+        // definition base on id
+        $def = $this->getResolver()->getService($rawId);
+
+        // fix definition
+        if (!is_array($def) || !isset($def['class'])) {
+           $def = ['class' => $def];
+        }
+
+        // overwrite arguments if provided
+        if (!empty($args)) {
+            $def['args'] = $args;
+        }
+
+        return $this->createFromDefinition($def);
+    }
+
+    /**
+     * Construct object base on the definition
+     *
+     * @param  array $definition
+     * @return object
+     * @access protected
+     */
+    protected function createFromDefinition(array $definition)
+    {
+        // get class
+        $class = $definition['class'];
+        $this->resolve($class);
+
+        // get args
+        $args  = isset($definition['args']) ? $definition['args'] : [];
+
+        // callable
+        if (is_array($class) || is_callable($class)) {
+            $obj = $this->executeCallable($class, $args);
+
+        // object
+        } elseif (is_object($class)) {
+            $obj = $class;
+
+        // classname
+        } else {
+            $obj = $this->constructObject($class, $args);
+        }
+
+        // after creation
+        $this->afterCreation($obj, $definition);
+
+        return $obj;
+    }
+
+    /**
+     * Instantiate service object from classname
+     *
+     * @param  string $class
+     * @param  array $args
+     * @return object
+     * @throws LogicException if something goes wrong
+     * @access protected
+     */
+    protected function constructObject(
+        /*# string */ $class,
+        array $args
+    ) {
+        $reflector = new \ReflectionClass($class);
+        $constructor = $reflector->getConstructor();
+
+        // not constructor defined
+        if (is_null($constructor)) {
+            return $reflector->newInstanceWithoutConstructor();
+
+        // normal class with constructor
+        } else {
+            $args = $this->matchArguments(
+                $constructor->getParameters(),
+                $args
+            );
+            return $reflector->newInstanceArgs($args);
+        }
+    }
+
+    /**
+     * Execute a (pseudo) callable with arguments
+     *
+     * @param  callable|array $callable callable or pseudo callable
+     * @param  array $arguments
+     * @return mixed
+     * @throws LogicException if something goes wrong
+     * @access protected
+     */
+    protected function executeCallable($callable, array $arguments)
+    {
+        try {
+            // resolving any references
+            $this->resolve($callable);
+
+            // argument matching
+            if (!empty($arguments)) {
+                $this->matchCallableArguments($callable, $arguments);
+            }
+
+            return call_user_func_array($callable, $arguments);
+
+        } catch (\Exception $e) {
+            throw new LogicException($e->getMessage(), $e->getCode());
+        }
     }
 
     /**

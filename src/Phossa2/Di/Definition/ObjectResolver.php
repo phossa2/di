@@ -14,8 +14,10 @@
 
 namespace Phossa2\Di\Definition;
 
+use Phossa2\Di\Traits\ContainerAwareTrait;
 use Phossa2\Di\Interfaces\ContainerInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
+use Phossa2\Di\Interfaces\ContainerAwareInterface;
 
 /**
  * Resolving object reference '#service_id' from DI container
@@ -25,13 +27,9 @@ use Phossa2\Config\Interfaces\ConfigInterface;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class ObjectResolver implements ConfigInterface
+class ObjectResolver implements ConfigInterface, ContainerAwareInterface
 {
-    /**
-     * @var    ContainerInterface
-     * @access private
-     */
-    private $container;
+    use ContainerAwareTrait;
 
     /**
      * @param  ContainerInterface $container
@@ -40,7 +38,7 @@ class ObjectResolver implements ConfigInterface
     public function __construct(
         ContainerInterface $container
     ) {
-        $this->container = $container;
+        $this->setContainer($container);
     }
 
     /**
@@ -50,7 +48,7 @@ class ObjectResolver implements ConfigInterface
      */
     public function get(/*# string */ $key, $default = null)
     {
-        return $this->container->get(substr($key, 1));
+        return $this->getContainer()->get(substr($key, 1));
     }
 
     /**
@@ -61,7 +59,7 @@ class ObjectResolver implements ConfigInterface
     public function has(/*# string */ $key)/*# : bool */
     {
         if (is_string($key) && '#' === substr($key, 0, 1)) {
-            return $this->container->has(substr($key, 1));
+            return $this->getContainer()->has(substr($key, 1));
         }
         return false;
     }

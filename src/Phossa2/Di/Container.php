@@ -22,7 +22,6 @@ use Phossa2\Di\Scope\ScopeInterface;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Di\Definition\ResolverAwareTrait;
 use Phossa2\Di\Interfaces\ContainerInterface;
 use Phossa2\Di\Definition\ResolverAwareInterface;
 use Phossa2\Di\Interfaces\ExtendedContainerInterface;
@@ -40,7 +39,7 @@ use Phossa2\Di\Interfaces\ExtendedContainerInterface;
  */
 class Container extends ObjectAbstract implements ContainerInterface, ResolverAwareInterface, ScopeInterface, ExtendedContainerInterface
 {
-    use ResolverAwareTrait, FactoryTrait;
+    use FactoryTrait;
 
     /**
      * services pool
@@ -92,8 +91,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
 
         // get the instance
         return $this->getInstance(
-            $id,
-            func_num_args() > 1 ? func_get_arg(1) : []
+            $id, func_num_args() > 1 ? func_get_arg(1) : []
         );
     }
 
@@ -117,17 +115,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     public function set(/*# string */ $id, $object)
     {
         list($rawId, $scope) = $this->splitId($id);
-
-        // not defined
-        if (!$this->has($id)) {
-            $this->getResolver()->setService($rawId, ['class' => $object]);
-        }
-
-        // non empty scope
-        if (!empty($scope)) {
-            $this->pool[$id] = $object;
-        }
-
+        $this->getResolver()->setService($rawId, $object);
         return $this;
     }
 
@@ -147,7 +135,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function run($callable, array $arguments = [])
     {
-        return $this->factoryCallable($callable, $arguments);
+        return $this->executeCallable($callable, $arguments);
     }
 
     /**
@@ -195,22 +183,19 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     protected function getInstance(/*# string */ $id, array $args)
     {
-        // get scoped id
+        // get id & scope info
         list($rawId, $scopedId, $scope) = $this->fullScopeInfo($id);
 
-        // try the pool
-        if (empty($args) && isset($this->pool[$scopedId])) {
-            return $this->pool[$scopedId];
+        // must get a new instance
+        if (!empty($args) || ScopeInterface::SCOPE_SINGLE === $scope) {
+            return $this->createInstance($rawId, $args);
         }
 
-        // create the instance
-        $obj = $this->factoryInstance($rawId, $args);
-
-        // cache it in the pool
-        if (empty($args) && ScopeInterface::SCOPE_SHARED !== $scope) {
-            $this->pool[$scopedId] = $obj;
+        // if not in the pool, create one
+        if (!isset($this->pool[$scopedId])) {
+            $this->pool[$scopedId] = $this->createInstance($rawId);
         }
 
-        return $obj;
+        return $this->pool[$scopedId];
     }
 }

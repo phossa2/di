@@ -88,6 +88,16 @@ interface ResolverInterface
     );
 
     /**
+     * Resolve any reference in the $toResolve (array or string)
+     *
+     * @param  mix &$toResolve
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function resolve(&$toResolve);
+
+    /**
      * Get the $key in 'service' section
      *
      * @param  string $key key/name

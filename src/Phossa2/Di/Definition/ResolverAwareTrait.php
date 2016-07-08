@@ -43,12 +43,12 @@ trait ResolverAwareTrait
     /**
      * {@inheritDoc}
      */
-    public function resolve($toResolve)
+    public function resolve(&$toResolve)
     {
-        if (is_array($toResolve) || is_string($toResolve)) {
-            return $this->getResolver();
-        } else {
-            return $toResolve;
+        if (!empty($toResolve) &&
+            (is_array($toResolve) || is_string($toResolve))
+        ) {
+            $this->getResolver()->resolve($toResolve);
         }
     }
 

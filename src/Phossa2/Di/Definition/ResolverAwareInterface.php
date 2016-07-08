@@ -42,10 +42,10 @@ interface ResolverAwareInterface
      * - resolve service: '${#cache}'
      * - resolve array: ['${#cache}', 'getFromCache']
      *
-     * @param  mixed $toResolve
-     * @return mixed
+     * @param  mixed &$toResolve
+     * @return $this
      * @access public
      * @api
      */
-    public function resolve($toResolve);
+    public function resolve(&$toResolve);
 }

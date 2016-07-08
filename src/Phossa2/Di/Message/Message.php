@@ -37,11 +37,17 @@ class Message extends BaseMessage
      */
     const DI_SERVICE_NOTFOUND = 1607061008;
 
+    /*
+     * Container loop detected for "%s"
+     */
+    const DI_LOOP_DETECTED = 1607061009;
+
     /**
      * {@inheritDoc}
      */
     protected static $messages = [
         self::DI_CONTAINER_NOTFOUND => 'Container not found',
         self::DI_SERVICE_NOTFOUND => 'Service instance "%s" not found',
+        self::DI_LOOP_DETECTED => 'Container loop detected for "%s"',
     ];
 }

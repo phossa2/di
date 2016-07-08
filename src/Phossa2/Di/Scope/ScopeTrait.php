@@ -96,7 +96,7 @@ trait ScopeTrait
         // get the default scope for $rawId
         if (empty($scope)) {
             $definition = $this->getResolver()->getService($rawId);
-            if (isset($definition['scope'])) {
+            if (is_array($definition) && isset($definition['scope'])) {
                 $scope = $definition['scope'];
             } else {
                 $scope = $this->default_scope;
