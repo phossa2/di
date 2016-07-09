@@ -12,8 +12,9 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Scope;
+namespace Phossa2\Di\Traits;
 
+use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Definition\ResolverAwareTrait;
 
 /**

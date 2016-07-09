@@ -63,9 +63,7 @@ interface ExtendedContainerInterface
     public function one(/*# string */ $id, array $arguments = []);
 
     /**
-     * Execute a callable, expands its arguments
-     *
-     * $callable can be a pseudo callable as follows,
+     * Execute a callable or pseudo callable with its arguments
      *
      * ```php
      * // pseudo callable using service reference string
@@ -84,20 +82,4 @@ interface ExtendedContainerInterface
      * @api
      */
     public function run($callable, array $arguments = []);
-
-    /**
-     * Execute/run the callables in batch mode
-     *
-     * ```php
-     * $methods = [
-     *     ['func' => ['${#logger}', 'warning'], 'args' => []],
-     *     ...
-     * ];
-     * ```
-     * @param  array $methods
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function batch(array $methods);
 }

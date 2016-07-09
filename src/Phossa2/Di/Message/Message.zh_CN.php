@@ -28,4 +28,5 @@ return [
     Message::DI_CONTAINER_NOTFOUND => '对象容器没有设置',
     Message::DI_SERVICE_NOTFOUND => '服务实例  "%s" 没有找到',
     Message::DI_LOOP_DETECTED => '对象容器发现 "%s" 死循环',
+    Message::DI_PARAMETER_NOTFOUND => '参数 "%s" 没有匹配',
 ];

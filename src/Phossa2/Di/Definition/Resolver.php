@@ -232,6 +232,8 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     )/*# : string */ {
         if ('' === $section) {
             return $key;
+        } elseif ('' === $key) {
+            return $this->base_node . '.' . $section;
         } else {
             return $this->base_node . '.' . $section . '.' . $key;
         }

@@ -18,9 +18,9 @@ use Phossa2\Config\Config;
 use Phossa2\Di\Message\Message;
 use Phossa2\Di\Traits\FactoryTrait;
 use Phossa2\Di\Definition\Resolver;
-use Phossa2\Di\Scope\ScopeInterface;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\NotFoundException;
 use Phossa2\Di\Interfaces\ContainerInterface;
 use Phossa2\Di\Definition\ResolverAwareInterface;
@@ -57,20 +57,23 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      * in the $config for container. normally it is the 'di' node.
      *
      * @param  Config $config
-     * @param  string $nodeName starting node
+     * @param  string $baseNode starting node
      * @access public
      */
     public function __construct(
         Config $config = null,
-        /*# string */ $nodeName = 'di'
+        /*# string */ $baseNode = 'di'
     ) {
         // setup the resolver
         $this->setResolver(
-            new Resolver($this, $config ?: (new Config()), $nodeName)
+            new Resolver($this, $config ?: (new Config()), $baseNode)
         );
 
+        // reserve 'container', later can be referenced as '${#container}'
+        $this->set('container', $this);
+
         // execute init methods defined in 'di.init' node
-        $this->initContainer($nodeName . '.init');
+        $this->executeNode($baseNode . '.init');
     }
 
     /**
@@ -131,7 +134,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     public function one(/*# string */ $id, array $arguments = [])
     {
         return $this->get(
-            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE),
+            $this->scopedId($id, self::SCOPE_SINGLE),
             $arguments
         );
     }
@@ -141,37 +144,52 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function run($callable, array $arguments = [])
     {
+        // resolve external stuff
+        $this->resolve($callable);
+        $this->resolve($arguments);
+
         return $this->executeCallable($callable, $arguments);
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function batch(array $methods)
-    {
-        foreach ($methods as $mthd) {
-            $this->run(
-                $mthd['func'],
-                isset($mthd['args']) ? $mthd['args'] : []
-            );
-        }
-    }
-
-    /**
-     * Execute methods in the 'di.init' node
+     * Execute methods defined in the node
      *
-     * @param  string $initNode
+     * ```php
+     * $node = [
+     *    'section1' => [
+     *        [callable1, arguments],
+     *        ...
+     *    ],
+     *    'section2' => [
+     *        ...
+     *    ],
+     *    ...
+     * ];
+     * ```
+     *
+     * @param  string $nodeName
      * @return $this
      * @access protected
      */
-    protected function initContainer(/*# string */ $initNode)
+    protected function executeNode(/*# string */ $nodeName)
     {
-        // Is init node defined ?
-        if ($this->getResolver()->has($initNode)) {
-            $init = $this->getResolver()->get($initNode);
-            foreach ($init as $section => $methods) {
-                $this->batch($methods);
-            }
+        // Is node defined ?
+        if (!$this->getResolver()->has($nodeName)) {
+            return;
+        }
+
+        // get the node
+        $node = $this->getResolver()->get($nodeName);
+
+        // merge all methods from the node
+        $batch = [];
+        foreach ($node as $methods) {
+            $batch = array_merge($batch, $methods);
+        }
+
+        // execute in batch
+        foreach ($batch as $method) {
+            $this->executeMethod($method);
         }
     }
 

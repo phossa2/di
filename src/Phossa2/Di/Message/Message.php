@@ -42,6 +42,11 @@ class Message extends BaseMessage
      */
     const DI_LOOP_DETECTED = 1607061009;
 
+    /*
+     * Parameter "%s" not matched
+     */
+    const DI_PARAMETER_NOTFOUND = 1607061010;
+
     /**
      * {@inheritDoc}
      */
@@ -49,5 +54,6 @@ class Message extends BaseMessage
         self::DI_CONTAINER_NOTFOUND => 'Container not found',
         self::DI_SERVICE_NOTFOUND => 'Service instance "%s" not found',
         self::DI_LOOP_DETECTED => 'Container loop detected for "%s"',
+        self::DI_PARAMETER_NOTFOUND => 'Parameter "%s" not matched',
     ];
 }
