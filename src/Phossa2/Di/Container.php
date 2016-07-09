@@ -22,6 +22,7 @@ use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\NotFoundException;
+use Phossa2\Di\Definition\ResolverInterface;
 use Phossa2\Di\Interfaces\ContainerInterface;
 use Phossa2\Di\Definition\ResolverAwareInterface;
 use Phossa2\Di\Interfaces\ExtendedContainerInterface;
@@ -56,22 +57,52 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      * definitions, parameters, mappings. $nodeName is the starting node
      * in the $config for container. normally it is the 'di' node.
      *
+     * ```php
+     * $configData = [
+     *     // container class
+     *     'di.class' => 'Phossa2\\Di\\Container',
+     *
+     *     // container service definitions
+     *     'di.service' => [
+     *         // ...
+     *     ],
+     *
+     *     // interface/classname mappings
+     *     'di.mapping' => [
+     *     ],
+     *
+     *     // init methods to run after container created
+     *     'di.init' => [
+     *         'default' => [],
+     *         'mystuff' => [ ... ],
+     *     ],
+     * ];
+     *
+     * // init $config
+     * $config = new Config($configData);
+     *
+     * // init container
+     * $container = new $config['di.class']($config);
+     * ```
+     *
      * @param  Config $config
+     * @param  ResolverInterface $resolver if injected
      * @param  string $baseNode starting node
      * @access public
      */
     public function __construct(
         Config $config = null,
+        ResolverInterface $resolver = null,
         /*# string */ $baseNode = 'di'
     ) {
         // setup the resolver
-        $this->setResolver(
-            new Resolver($this, $config ?: (new Config()), $baseNode)
-        );
+        if (null === $resolver) {
+            $resolver = new Resolver($this, $config ?: (new Config()), $baseNode);
+        }
+        $this->setResolver($resolver->setBaseNode($baseNode));
 
-        // reserve 'container', later can be referenced as '${#container}'
-        // e.g. to be used in arguments for certain callable
-        $this->set('container', ['class' => $this, 'scope' => self::SCOPE_SHARED]);
+        // reserve 'di.service.container', later can be used as '${#container}'
+        $this->registerSelf();
 
         // execute init methods defined in 'di.init' node
         $this->executeNode($baseNode . '.init');
@@ -122,7 +153,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         $this->getResolver()->setService($rawId, $object);
 
         // if $scope found, put this instance in the pool
-        if (!empty($scope)) {
+        if (!empty($scope) && is_object($object)) {
             $this->pool[$id] = $object;
         }
 
@@ -150,6 +181,26 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         $this->resolve($arguments);
 
         return $this->executeCallable($callable, $arguments);
+    }
+
+    /**
+     * Register 'container' in container to be used as '${#container}' later
+     *
+     * @return $this
+     * @access protected
+     */
+    protected function registerSelf()
+    {
+        // set in definition
+        $this->set(
+            'container',
+            ['class' => $this, 'scope' => self::SCOPE_SHARED]
+        );
+
+        // put in the pool to skip running common methods
+        $this->pool[$this->scopedId('container', self::SCOPE_SHARED)] = $this;
+
+        return $this;
     }
 
     /**

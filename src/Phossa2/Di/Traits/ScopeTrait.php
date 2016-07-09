@@ -96,14 +96,13 @@ trait ScopeTrait
         // split into raw id and scope (if any)
         list($rawId, $scope) = $this->splitId($id);
 
-        // get the default scope for $rawId
-        if (empty($scope)) {
-            $definition = $this->getResolver()->getService($rawId);
-            if (is_array($definition) && isset($definition['scope'])) {
-                $scope = $definition['scope'];
-            } else {
-                $scope = $this->default_scope;
-            }
+        // if empty, use the default scope
+        $scope = empty($scope) ? $this->default_scope : $scope;
+
+        // honor forced scope
+        $definition = $this->getResolver()->getService($rawId);
+        if (is_array($definition) && isset($definition['scope'])) {
+            $scope = $definition['scope'];
         }
 
         return [$rawId, $scope];

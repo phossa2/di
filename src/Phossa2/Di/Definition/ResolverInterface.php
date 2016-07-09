@@ -226,4 +226,14 @@ interface ResolverInterface
      * @api
      */
     public function autoWiring(/*# bool */ $on = true);
+
+    /**
+     * Set the container definition starting node
+     *
+     * @param  string $nodeName
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function setBaseNode(/*# string */ $nodeName);
 }

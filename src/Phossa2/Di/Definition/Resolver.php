@@ -206,13 +206,9 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
     }
 
     /**
-     * Set the container definition starting node in $config object
-     *
-     * @param  string $nodeName
-     * @return $this
-     * @access protected
+     * {@inheritDoc}
      */
-    protected function setBaseNode(/*# string */ $nodeName)
+    public function setBaseNode(/*# string */ $nodeName)
     {
         $this->base_node = $nodeName;
         return $this;
