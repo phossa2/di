@@ -42,7 +42,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     use FactoryTrait;
 
     /**
-     * services pool
+     * instances pool
      *
      * @var    object[]
      * @access protected
@@ -52,12 +52,12 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * Constructor
      *
-     * Inject a config instance which will provide configurations for all
-     * the parameters, references and container related service and mapping
-     * configurations
+     * Inject a config instance which will provide configs for all the
+     * definitions, parameters, mappings. $nodeName is the starting node
+     * in the $config for container. normally it is the 'di' node.
      *
      * @param  Config $config
-     * @param  string $nodeName starting node in $config for the container
+     * @param  string $nodeName starting node
      * @access public
      */
     public function __construct(
@@ -70,7 +70,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         );
 
         // execute init methods defined in 'di.init' node
-        $this->initContainer($nodeName);
+        $this->initContainer($nodeName . '.init');
     }
 
     /**
@@ -116,6 +116,12 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     {
         list($rawId, $scope) = $this->splitId($id);
         $this->getResolver()->setService($rawId, $object);
+
+        // if $scope found, put this instance in the pool
+        if (!empty($scope)) {
+            $this->pool[$id] = $object;
+        }
+
         return $this;
     }
 
@@ -154,16 +160,13 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * Execute methods in the 'di.init' node
      *
-     * @param  string $nodeName starting node for the container
+     * @param  string $initNode
      * @return $this
      * @access protected
      */
-    protected function initContainer(/*# string */ $nodeName)
+    protected function initContainer(/*# string */ $initNode)
     {
-        // node is 'di.init'
-        $initNode = $nodeName . '.init';
-
-        // has node defined
+        // Is init node defined ?
         if ($this->getResolver()->has($initNode)) {
             $init = $this->getResolver()->get($initNode);
             foreach ($init as $section => $methods) {
@@ -175,8 +178,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * Get the instance either from the pool or create it
      *
-     * @param  string $id
-     * @param  array $args
+     * @param  string $id service id with or without the scope
+     * @param  array $args arguments for the constructor
      * @return object
      * @throws LogicException if instantiation goes wrong
      * @access protected
@@ -186,14 +189,14 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         // get id & scope info
         list($rawId, $scopedId, $scope) = $this->fullScopeInfo($id);
 
-        // must get a new instance
+        // get a new instance if args or in single scope
         if (!empty($args) || ScopeInterface::SCOPE_SINGLE === $scope) {
             return $this->createInstance($rawId, $args);
         }
 
         // if not in the pool, create one
         if (!isset($this->pool[$scopedId])) {
-            $this->pool[$scopedId] = $this->createInstance($rawId);
+            $this->pool[$scopedId] = $this->createInstance($rawId, []);
         }
 
         return $this->pool[$scopedId];

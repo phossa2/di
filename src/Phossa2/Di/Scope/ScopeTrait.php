@@ -14,7 +14,7 @@
 
 namespace Phossa2\Di\Scope;
 
-use Phossa2\Di\Definition\ResolverInterface;
+use Phossa2\Di\Definition\ResolverAwareTrait;
 
 /**
  * ScopeTrait
@@ -29,6 +29,8 @@ use Phossa2\Di\Definition\ResolverInterface;
  */
 trait ScopeTrait
 {
+    use ResolverAwareTrait;
+
     /**
      * default scope for objects
      *
@@ -51,7 +53,7 @@ trait ScopeTrait
     /**
      * Split 'service_id@scope' into ['service_id', 'scope']
      *
-     * if no scope part, returns '' as the scope
+     * if no scope found, use ''
      *
      * @param  string $id
      * @return array [$id, $scope]
@@ -82,7 +84,7 @@ trait ScopeTrait
     }
 
     /**
-     * Returns the raw id (without scope) and the scope
+     * Returns the raw id and the calculated scope
      *
      * @param  string $id
      * @return array [rawId, scope]
@@ -105,9 +107,4 @@ trait ScopeTrait
 
         return [$rawId, $scope];
     }
-
-    /**
-     * @return ResolverInterface
-     */
-    abstract public function getResolver()/*# : ResolverInterface */;
 }

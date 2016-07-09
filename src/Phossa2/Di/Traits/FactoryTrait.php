@@ -17,10 +17,11 @@ namespace Phossa2\Di\Traits;
 use Phossa2\Di\Message\Message;
 use Phossa2\Di\Scope\ScopeTrait;
 use Phossa2\Di\Exception\LogicException;
-use Phossa2\Di\Definition\ResolverAwareTrait;
 
 /**
  * FactoryTrait
+ *
+ * Create service instance here
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
@@ -29,7 +30,7 @@ use Phossa2\Di\Definition\ResolverAwareTrait;
  */
 trait FactoryTrait
 {
-    use ScopeTrait, ResolverAwareTrait;
+    use ScopeTrait;
 
     /**
      * for loop detection
@@ -50,7 +51,7 @@ trait FactoryTrait
     {
         list($rawId, $scope) = $this->scopedInfo($id);
 
-        // if $scope is a '#service_id'
+        // special treatment if $scope is a '#service_id'
         if (isset($this->loop[$scope])) {
             $scope .= '_' . $this->loop[$scope];
         }
@@ -59,21 +60,19 @@ trait FactoryTrait
     }
 
     /**
-     * Create the instance with loop detection built-in
+     * Create the instance with loop detection
      *
      * @param  string $rawId
-     * @param  array $arguments
+     * @param  array $args arguments for the constructor if any
      * @return object
-     * @throws LogicException if anything goes wrong
+     * @throws LogicException if instantiation goes wrong or loop detected
      * @access protected
      */
-    protected function createInstance(
-        /*# string */ $rawId,
-        array $arguments = []
-    ) {
+    protected function createInstance(/*# string */ $rawId, array $args)
+    {
         static $counter = 0;
 
-        // service id
+        // conver 'service_id' to '#service_id'
         $serviceId = $this->getServiceId($rawId);
 
         // loop detected
@@ -88,75 +87,76 @@ trait FactoryTrait
         $this->loop[$serviceId] = ++$counter;
 
         // create the service object
-        $obj = $this->createFromId($rawId, $arguments);
+        try {
+            $obj = $this->createFromId($rawId, $args);
+        } catch (\Exception $e) {
+            throw new LogicException($e->getMessage(), $e->getCode());
+        }
 
-        // remove loop marker
+        // remove current marker
         unset($this->loop[$serviceId]);
 
         return $obj;
     }
 
     /**
-     * Create object base on the id
+     * Create object base on the raw id
      *
      * @param  string $rawId
-     * @param  array $args if any new args provided
+     * @param  array $arguments
      * @return object
+     * @throws LogicException if instantiation goes wrong
      * @access protected
      */
-    protected function createFromId(
-        /*# string */ $rawId,
-        array $args
-    ) {
-        // definition base on id
-        $def = $this->getResolver()->getService($rawId);
-
-        // fix definition
-        if (!is_array($def) || !isset($def['class'])) {
-           $def = ['class' => $def];
-        }
-
-        // overwrite arguments if provided
-        if (!empty($args)) {
-            $def['args'] = $args;
-        }
-
-        return $this->createFromDefinition($def);
-    }
-
-    /**
-     * Construct object base on the definition
-     *
-     * @param  array $definition
-     * @return object
-     * @access protected
-     */
-    protected function createFromDefinition(array $definition)
+    protected function createFromId(/*# string */ $rawId, array $arguments)
     {
-        // get class
-        $class = $definition['class'];
-        $this->resolve($class);
+        // get definition
+        $def = $this->getDefinition($rawId, $arguments);
 
-        // get args
-        $args  = isset($definition['args']) ? $definition['args'] : [];
+        if (is_string($def['class'])) {
+            // classname
+            $obj = $this->constructObject($def['class'], $def['args']);
 
-        // callable
-        if (is_array($class) || is_callable($class)) {
-            $obj = $this->executeCallable($class, $args);
-
-        // object
-        } elseif (is_object($class)) {
-            $obj = $class;
-
-        // classname
         } else {
-            $obj = $this->constructObject($class, $args);
+            // object or callable etc.
+            $obj = $this->executeCallable($def['class'], $def['args']);
         }
 
         // after creation
-        $this->afterCreation($obj, $definition);
+        $this->afterCreation($obj, $def);
 
         return $obj;
+    }
+
+    /**
+     * Get service definition
+     *
+     * @param  string $rawId
+     * @param  array $args
+     * @return array
+     * @access protected
+     */
+    protected function getDefinition(
+        /*# string */ $rawId,
+        array $args
+    )/*# : array */ {
+        // get the definition
+        $def = $this->getResolver()->getService($rawId);
+
+        // fix class
+        if (!is_array($def) || !isset($def['class'])) {
+            $def = ['class' => $def];
+        }
+
+        // fix arguments
+        if (!empty($args) || !isset($def['args'])) {
+            $def['args'] = $args;
+        }
+
+        // resolve class
+        $this->resolve($def['class']);
+
+        return $def;
     }
 
     /**
@@ -168,16 +168,14 @@ trait FactoryTrait
      * @throws LogicException if something goes wrong
      * @access protected
      */
-    protected function constructObject(
-        /*# string */ $class,
-        array $args
-    ) {
+    protected function constructObject(/*# string */ $class, array $args)
+    {
         $reflector = new \ReflectionClass($class);
         $constructor = $reflector->getConstructor();
 
         // not constructor defined
         if (is_null($constructor)) {
-            return $reflector->newInstanceWithoutConstructor();
+            $obj = $reflector->newInstanceWithoutConstructor();
 
         // normal class with constructor
         } else {
@@ -185,14 +183,16 @@ trait FactoryTrait
                 $constructor->getParameters(),
                 $args
             );
-            return $reflector->newInstanceArgs($args);
+            $obj = $reflector->newInstanceArgs($args);
         }
+
+        return $obj;
     }
 
     /**
      * Execute a (pseudo) callable with arguments
      *
-     * @param  callable|array $callable callable or pseudo callable
+     * @param  callable|array|object $callable callable or pseudo callable
      * @param  array $arguments
      * @return mixed
      * @throws LogicException if something goes wrong
@@ -200,20 +200,18 @@ trait FactoryTrait
      */
     protected function executeCallable($callable, array $arguments)
     {
-        try {
-            // resolving any references
-            $this->resolve($callable);
+        // resolving any references
+        $this->resolve($callable);
 
-            // argument matching
-            if (!empty($arguments)) {
-                $this->matchCallableArguments($callable, $arguments);
-            }
-
-            return call_user_func_array($callable, $arguments);
-
-        } catch (\Exception $e) {
-            throw new LogicException($e->getMessage(), $e->getCode());
+        // not callable
+        if (!is_callable($callable)) {
+            return $callable;
         }
+
+        // resolve argument
+        $this->resolve($arguments);
+
+        return call_user_func_array($callable, $arguments);
     }
 
     /**
