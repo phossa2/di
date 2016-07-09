@@ -70,7 +70,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         );
 
         // reserve 'container', later can be referenced as '${#container}'
-        $this->set('container', $this);
+        // e.g. to be used in arguments for certain callable
+        $this->set('container', ['class' => $this, 'scope' => self::SCOPE_SHARED]);
 
         // execute init methods defined in 'di.init' node
         $this->executeNode($baseNode . '.init');
@@ -179,16 +180,13 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         }
 
         // get the node
-        $node = $this->getResolver()->get($nodeName);
+        $nodeData = $this->getResolver()->get($nodeName);
 
         // merge all methods from the node
-        $batch = [];
-        foreach ($node as $methods) {
-            $batch = array_merge($batch, $methods);
-        }
+        $methods = $this->mergeNodeInfo($nodeData);
 
         // execute in batch
-        foreach ($batch as $method) {
+        foreach ($methods as $method) {
             $this->executeMethod($method);
         }
     }

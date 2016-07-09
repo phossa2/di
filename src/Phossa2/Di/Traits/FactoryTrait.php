@@ -216,6 +216,14 @@ trait FactoryTrait
     /**
      * Rebuild callable base methodName and object
      *
+     * method:
+     * - ['function', [ arguments...]]
+     *
+     * - [ callable, [ arguments ...]]
+     *
+     * - ['method', [ arguments ...]]
+     *   convert to [[$object, 'method'], [ ... ]]
+     *
      * @param  mixed method
      * @param  object|null $object to construct callable
      * @throws LogicException if something goes wrong
@@ -382,7 +390,7 @@ trait FactoryTrait
      * Things to do after object created.
      *
      * @param  object $object
-     * @param  array $definition
+     * @param  array $definition service definition for $object
      * @access protected
      */
     protected function afterCreation($object, array $definition)
@@ -394,31 +402,56 @@ trait FactoryTrait
             }
         }
 
-        // execute common methods in 'di.common'
+        // execute common methods in 'di.common' for all created objects
         if ($this->getResolver()->has('', 'common')) {
-            $this->executeCommons(
-                $object,
-                $this->getResolver()->get('', 'common')
-            );
+            $methods = $this->mergeNodeInfo($this->getResolver()->get('', 'common'));
+            $this->executeTester($object, $methods);
         }
     }
 
     /**
      * Execute [tester, todo] pairs, both use $object as argument
      *
+     * signatures
+     *
      * - tester: function($object) { return $object instance of XXXX; }
-     * - todo  : function($object) {
+     * - todoer: function($object, $container) { }
+     *
      * @param  object $object
      * @param  array $methods
      * @access protected
      */
-    protected function executeCommons($object, array $methods)
+    protected function executeTester($object, array $methods)
     {
         foreach ($methods as $method) {
+            // tester: $method[0]
             if ($method[0]($object)) {
-                $method[1]($object);
+                // todoer: $method[1]
+                $method[1]($object, $this);
             }
         }
+    }
+
+    /**
+     * Merge data in the node, normally merge methods
+     *
+     * @param  array $nodeData
+     * @return array
+     * @access protected
+     */
+    protected function mergeNodeInfo(array $nodeData)/*# : array */
+    {
+        // no merge
+        if (isset($nodeData[0])) {
+            return $nodeData;
+        }
+
+        // in sections
+        $result = [];
+        foreach ($nodeData as $data) {
+            $result = array_merge($result, $data);
+        }
+        return $result;
     }
 
     /**
