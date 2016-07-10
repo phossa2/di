@@ -34,7 +34,8 @@ use Phossa2\Shared\Reference\DelegatorAwareInterface;
  */
 class ObjectResolver implements ConfigInterface, ContainerAwareInterface, DelegatorAwareInterface
 {
-    use ContainerAwareTrait, DelegatorAwareTrait;
+    use ContainerAwareTrait,
+        DelegatorAwareTrait;
 
     /**
      * @param  ContainerInterface $container
