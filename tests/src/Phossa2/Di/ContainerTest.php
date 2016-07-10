@@ -25,4 +25,14 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         $this->object = null;
         parent::tearDown();
     }
+
+    /**
+     * Test has
+     *
+     * @cover Phossa2\Di\Container::has()
+     */
+    public function testHas()
+    {
+        $this->assertTrue(true);
+    }
 }
