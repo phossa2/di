@@ -86,12 +86,8 @@ trait FactoryTrait
         // set loop marker
         $this->loop[$serviceId] = ++$counter;
 
-        try {
-            // create the service instance
-            $obj = $this->createFromId($rawId, $args);
-        } catch (\Exception $e) {
-            throw new LogicException($e->getMessage(), $e->getCode());
-        }
+        // create the service instance
+        $obj = $this->createFromId($rawId, $args);
 
         // remove current marker
         unset($this->loop[$serviceId]);
@@ -144,7 +140,7 @@ trait FactoryTrait
         $def = $this->getResolver()->getService($rawId);
 
         // fix class
-        if (!is_array($def) || !isset($def['class'])) {
+        if (!is_array($def)) {
             $def = ['class' => $def];
         }
 
@@ -235,10 +231,7 @@ trait FactoryTrait
         $arguments = isset($method[1]) ? $method[1] : [];
 
         // rebuild callable from $object
-        if (null !== $object &&
-            is_string($callable) &&
-            method_exists($object, $callable)
-        ) {
+        if (null !== $object) {
             $callable = [$object, $callable];
         }
 
