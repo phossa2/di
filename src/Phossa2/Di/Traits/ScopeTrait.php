@@ -96,7 +96,7 @@ trait ScopeTrait
         // split into raw id and scope (if any)
         list($rawId, $scope) = $this->splitId($id);
 
-        // if empty, use the default scope
+        // use the default scope if no scope given
         $scope = empty($scope) ? $this->default_scope : $scope;
 
         // honor forced scope

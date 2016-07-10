@@ -43,7 +43,7 @@ trait FactoryTrait
     /**
      * Full scope info
      *
-     * @param  sting $id
+     * @param  string $id
      * @return array
      * @access protected
      */
@@ -146,9 +146,7 @@ trait FactoryTrait
 
         // fix arguments
         if (!empty($args) || !isset($def['args'])) {
-            // resolve external arguments
             $this->resolve($args);
-
             $def['args'] = $args;
         }
 
@@ -293,7 +291,7 @@ trait FactoryTrait
             // arg to match with
             $argument = isset($providedArguments[0]) ? $providedArguments[0] : null;
 
-            // $param is an interface or class ?
+            // an interface or class ?
             $class = $param->getClass();
 
             if ($this->isTypeMatched($param, $argument, $class)) {
@@ -334,14 +332,14 @@ trait FactoryTrait
      * @access protected
      */
     protected function isTypeMatched(
-        \ReflectionParameter $parameters,
+        \ReflectionParameter $parameter,
         $argument,
         $class
     )/*# : bool */ {
         if (null === $argument) {
             return false;
         } elseif (null !== $class) {
-            return is_a($argument, $parameters->getClass()->getName());
+            return is_a($argument, $parameter->getClass()->getName());
         } else {
             return true;
         }
@@ -406,8 +404,7 @@ trait FactoryTrait
      * Execute [tester, todo] pairs, both use $object as argument
      *
      * signatures
-     *
-     * - tester: function($object) { return $object instance of XXXX; }
+     * - tester: function($object, $container) { return $object instance of XXXX; }
      * - todoer: function($object, $container) { }
      *
      * @param  object $object
@@ -417,9 +414,7 @@ trait FactoryTrait
     protected function executeTester($object, array $methods)
     {
         foreach ($methods as $method) {
-            // tester: $method[0]
-            if ($method[0]($object)) {
-                // todoer: $method[1]
+            if ($method[0]($object, $this)) {
                 $method[1]($object, $this);
             }
         }
@@ -458,4 +453,10 @@ trait FactoryTrait
     {
         return '#' . $rawId;
     }
+
+    /**
+     * @param string $id Identifier of the entry to look for.
+     * @return mixed Entry.
+     */
+    abstract public function get($id);
 }
