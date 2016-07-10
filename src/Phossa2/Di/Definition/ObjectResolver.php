@@ -17,7 +17,9 @@ namespace Phossa2\Di\Definition;
 use Phossa2\Di\Traits\ContainerAwareTrait;
 use Phossa2\Di\Interfaces\ContainerInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
+use Phossa2\Shared\Reference\DelegatorAwareTrait;
 use Phossa2\Di\Interfaces\ContainerAwareInterface;
+use Phossa2\Shared\Reference\DelegatorAwareInterface;
 
 /**
  * Resolving object reference '#service_id' from DI container
@@ -27,9 +29,9 @@ use Phossa2\Di\Interfaces\ContainerAwareInterface;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class ObjectResolver implements ConfigInterface, ContainerAwareInterface
+class ObjectResolver implements ConfigInterface, ContainerAwareInterface, DelegatorAwareInterface
 {
-    use ContainerAwareTrait;
+    use ContainerAwareTrait, DelegatorAwareTrait;
 
     /**
      * @param  ContainerInterface $container

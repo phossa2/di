@@ -79,7 +79,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      * ];
      *
      * // init $config
-     * $config = new Config($configData);
+     * $config = new Config(null, null, $configData);
      *
      * // init container
      * $container = new $config['di.class']($config);
@@ -99,6 +99,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         if (null === $resolver) {
             $resolver = new Resolver($this, $config ?: (new Config()), $baseNode);
         }
+
         $this->setResolver($resolver->setBaseNode($baseNode));
 
         // reserve 'di.service.container', later can be used as '${#container}'

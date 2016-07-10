@@ -201,7 +201,7 @@ class Resolver extends ObjectAbstract implements ResolverInterface, DelegatorAwa
      */
     public function autoWiring(/*# bool */ $on = true)
     {
-        $this->auto = $on;
+        $this->auto = (bool) $on;
         return $this;
     }
 
