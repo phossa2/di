@@ -34,7 +34,9 @@ use Phossa2\Di\Interfaces\ExtendedContainerInterface;
  * @author  Hong Zhang <phossa@126.com>
  * @see     ObjectAbstract
  * @see     ContainerInterface
- * @see     DefinitionInterface
+ * @see     ResolverAwareInterface
+ * @see     ScopeInterface
+ * @see     ExtendedContainerInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */

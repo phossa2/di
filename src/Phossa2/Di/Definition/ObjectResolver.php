@@ -26,6 +26,9 @@ use Phossa2\Shared\Reference\DelegatorAwareInterface;
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
+ * @see     ConfigInterface
+ * @see     ContainerAwareInterface
+ * @see     DelegatorAwareInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
