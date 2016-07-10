@@ -33,7 +33,7 @@ interface ExtendedContainerInterface
      *
      *
      * @param  string $id
-     * @param  string $object
+     * @param  mixed $object
      * @return $this
      * @access public
      * @api

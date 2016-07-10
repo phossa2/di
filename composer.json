@@ -3,7 +3,7 @@
     "license": "MIT",
     "type": "library",
     "description": "A very nice dependency injection library for PHP.",
-    "keywords": ["phossa2", "dependency injection", "container"],
+    "keywords": ["phossa2", "dependency injection", "container", "container-interop"],
     "homepage": "https://github.com/phossa2/di",
     "authors": [
         {

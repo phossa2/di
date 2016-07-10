@@ -297,7 +297,7 @@ trait FactoryTrait
             // arg to match with
             $argument = isset($providedArguments[0]) ? $providedArguments[0] : null;
 
-            // an interface or class ?
+            // check the class
             $class = $param->getClass();
 
             if ($this->isTypeMatched($param, $argument, $class)) {
