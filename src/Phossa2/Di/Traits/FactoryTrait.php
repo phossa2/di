@@ -46,7 +46,7 @@ trait FactoryTrait
      * @var    int
      * @access protected
      */
-     protected $counter = 0;
+    protected $counter = 0;
 
     /**
      * Full scope info

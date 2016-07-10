@@ -46,8 +46,7 @@ trait ScopeTrait
     public function share(/*# bool */ $shared = true)
     {
         $this->default_scope = (bool) $shared ?
-            ScopeInterface::SCOPE_SHARED :
-            ScopeInterface::SCOPE_SINGLE ;
+            ScopeInterface::SCOPE_SHARED : ScopeInterface::SCOPE_SINGLE;
         return $this;
     }
 
