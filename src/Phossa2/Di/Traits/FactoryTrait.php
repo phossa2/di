@@ -41,6 +41,14 @@ trait FactoryTrait
     protected $loop = [];
 
     /**
+     * a counter
+     *
+     * @var    int
+     * @access protected
+     */
+     protected $counter = 0;
+
+    /**
      * Full scope info
      *
      * @param  string $id
@@ -70,8 +78,6 @@ trait FactoryTrait
      */
     protected function createInstance(/*# string */ $rawId, array $args)
     {
-        static $counter = 0;
-
         // conver 'service_id' to '#service_id'
         $serviceId = $this->getServiceId($rawId);
 
@@ -84,7 +90,7 @@ trait FactoryTrait
         }
 
         // set loop marker
-        $this->loop[$serviceId] = ++$counter;
+        $this->loop[$serviceId] = ++$this->counter;
 
         // create the service instance
         $obj = $this->createFromId($rawId, $args);
