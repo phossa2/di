@@ -62,6 +62,11 @@ class Message extends BaseMessage
      */
     const DI_CONTAINER_READONLY = 1607061013;
 
+    /*
+     * Parameter "%s" mismatched for method "%s"
+     */
+    const DI_PARAMETER_MISMATCH = 1607061014;
+
     /**
      * {@inheritDoc}
      */
@@ -73,5 +78,6 @@ class Message extends BaseMessage
         self::DI_RESOLVER_NOTFOUND => 'Resolver not found',
         self::DI_FACTORY_NOTFOUND => 'Factory not found',
         self::DI_CONTAINER_READONLY => 'Write to readonly container with "%s"',
+        self::DI_PARAMETER_MISMATCH => 'Parameter "%s" mismatched for method "%s"',
     ];
 }

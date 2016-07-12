@@ -16,6 +16,7 @@ namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Container;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Message\Message;
 
 /**
  * FactoryTrait
@@ -113,7 +114,7 @@ trait FactoryTrait
             $class = $param->getClass();
             if ($this->isTypeMatched($param, $providedArguments, $class)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
-            } elseif (null !== $class) {
+            } elseif ($this->isRequiredClass($param, $providedArguments)) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
             }
         }
@@ -137,9 +138,39 @@ trait FactoryTrait
         if (empty($arguments)) {
             return false;
         } elseif (null !== $class) {
-            return is_a($arguments[0], $parameter->getClass()->getName());
+            return is_a($arguments[0], $class->getName());
         } else {
             return true;
+        }
+    }
+
+    /**
+     * Is $param required and is a class/interface
+     *
+     * @param  \ReflectionParameter $param
+     * @param  array $arguments
+     * @return bool
+     * @throws LogicException if mismatched arguments
+     * @access protected
+     */
+    protected function isRequiredClass(
+        \ReflectionParameter $param,
+        array $arguments
+    )/*# : bool */ {
+        $optional = $param->isOptional();
+        if ($param->getClass()) {
+            return !$optional || !empty($arguments);
+        } elseif ($optional && empty($arguments)) {
+            return false;
+        } else {
+            throw new LogicException(
+                Message::get(
+                    Message::DI_PARAMETER_MISMATCH,
+                    $param->getName(),
+                    $param->getDeclaringFunction()
+                ),
+                Message::DI_PARAMETER_MISMATCH
+            );
         }
     }
 
