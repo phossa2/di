@@ -131,14 +131,14 @@ interface ResolverInterface
      *
      * @param  string $id key/name
      * @param  mixed $definition classname/callable/array/object etc.
-     * @param  array $arguments constructor/callable arguments
+     * @param  array $args constructor/callable arguments
      * @return $this
      * @access public
      */
     public function setService(
         /*# string */ $id,
         $definition,
-        array $arguments = []
+        array $args = []
     );
 
     /**

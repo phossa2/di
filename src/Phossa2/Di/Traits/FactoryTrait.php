@@ -112,7 +112,7 @@ trait FactoryTrait
         $resolvedArguments = [];
         foreach ($reflectionParameters as $i => $param) {
             $class = $param->getClass();
-            if ($this->isTypeMatched($param, $providedArguments, $class)) {
+            if ($this->isTypeMatched($class, $providedArguments)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
             } elseif ($this->isRequiredClass($param, $providedArguments)) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
@@ -122,19 +122,15 @@ trait FactoryTrait
     }
 
     /**
-     * Is $parameter same type as the $argument ?
+     * Try best to guess parameter and argument are the same type
      *
-     * @param  \ReflectionParameter $parameter
+     * @param  null|\ReflectionClass $class
      * @param  array $arguments
-     * @param  null|string $class
      * @return bool
      * @access protected
      */
-    protected function isTypeMatched(
-        \ReflectionParameter $parameter,
-        array $arguments,
-        $class
-    )/*# : bool */ {
+    protected function isTypeMatched($class, array $arguments)/*# : bool */
+    {
         if (empty($arguments)) {
             return false;
         } elseif (null !== $class) {
@@ -160,7 +156,7 @@ trait FactoryTrait
         $optional = $param->isOptional();
         if ($param->getClass()) {
             return !$optional || !empty($arguments);
-        } elseif ($optional && empty($arguments)) {
+        } elseif (($optional && empty($arguments))) {
             return false;
         } else {
             throw new LogicException(

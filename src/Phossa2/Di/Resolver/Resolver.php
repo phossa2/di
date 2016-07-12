@@ -194,12 +194,12 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     public function setService(
         /*# string */ $id,
         $definition,
-        array $arguments = []
+        array $args = []
     ) {
-        if (!empty($arguments)) {
+        if (!empty($args)) {
             $definition = [
                 'class' => $definition,
-                'args'  => $arguments
+                'args'  => $args
             ];
         }
         return $this->setInSection($id, 'service', $definition);
