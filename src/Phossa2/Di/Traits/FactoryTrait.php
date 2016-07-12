@@ -113,7 +113,7 @@ trait FactoryTrait
             $class = $param->getClass();
             if ($this->isTypeMatched($param, $providedArguments, $class)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
-            } elseif (null !== $class && !$param->isOptional()) {
+            } elseif (null !== $class) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
             }
         }
@@ -134,7 +134,7 @@ trait FactoryTrait
         array $arguments,
         $class
     )/*# : bool */ {
-        if (empty($argument)) {
+        if (empty($arguments)) {
             return false;
         } elseif (null !== $class) {
             return is_a($arguments[0], $parameter->getClass()->getName());
