@@ -97,7 +97,6 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
         // set config and make it/self writable
         $this->config_resolver = $config;
         if ($config instanceof WritableInterface) {
-            $this->setWritable(true);
             $config->setWritable(true);
         }
 
@@ -111,7 +110,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
 
         // set up lookup pool
         $this->addRegistry($this->object_resolver)
-            ->addRegistry($this->config_resolver);
+            ->addRegistry($config);
     }
 
     /**

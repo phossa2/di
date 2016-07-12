@@ -15,7 +15,6 @@
 namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Container;
-use Phossa2\Di\Message\Message;
 use Phossa2\Di\Exception\LogicException;
 
 /**
@@ -102,7 +101,6 @@ trait FactoryTrait
      * @param  array $providedArguments
      * @return array the resolved arguments
      * @throws LogicException
-     * @throws NotFoundException
      * @access protected
      */
     protected function matchArguments(
@@ -111,25 +109,14 @@ trait FactoryTrait
     )/*# : array */ {
         // result
         $resolvedArguments = [];
-
-        // go thru each predefined parameter
         foreach ($reflectionParameters as $i => $param) {
-            // arg to match with
-            $argument = isset($providedArguments[0]) ? $providedArguments[0] : null;
-
-            // check the class
             $class = $param->getClass();
-
-            if ($this->isTypeMatched($param, $argument, $class)) {
-                // type matched
+            if ($this->isTypeMatched($param, $providedArguments, $class)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
-
-            } elseif (null !== $class) {
-                // not matched, but $param is an interface or class
+            } elseif (null !== $class && !$param->isOptional()) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
             }
         }
-
         return array_merge($resolvedArguments, $providedArguments);
     }
 
@@ -137,20 +124,20 @@ trait FactoryTrait
      * Is $parameter same type as the $argument ?
      *
      * @param  \ReflectionParameter $parameter
-     * @param  mixed $argument
+     * @param  array $arguments
      * @param  null|string $class
      * @return bool
      * @access protected
      */
     protected function isTypeMatched(
         \ReflectionParameter $parameter,
-        $argument,
+        array $arguments,
         $class
     )/*# : bool */ {
-        if (null === $argument) {
+        if (empty($argument)) {
             return false;
         } elseif (null !== $class) {
-            return is_a($argument, $parameter->getClass()->getName());
+            return is_a($arguments[0], $parameter->getClass()->getName());
         } else {
             return true;
         }
