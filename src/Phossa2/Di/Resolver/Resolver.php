@@ -94,9 +94,10 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
         ConfigInterface $config,
         /*# string */ $nodeName
     ) {
-        // set config and make it writable
+        // set config and make it/self writable
         $this->config_resolver = $config;
         if ($config instanceof WritableInterface) {
+            $this->setWritable(true);
             $config->setWritable(true);
         }
 

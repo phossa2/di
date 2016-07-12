@@ -270,8 +270,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     protected function registerSelf(/*# bool */ $skipCommon = false)
     {
         $name = 'container';
-        if (!$this->has($name) && $this->isWritable()) {
-            $this->set(
+        if (!$this->has($name) && $this->getResolver()->isWritable()) {
+            $this->getResolver()->set(
                 $name,
                 ['class' => $this, 'skip' => $skipCommon]
             );

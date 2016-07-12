@@ -127,24 +127,10 @@ trait FactoryTrait
             } elseif (null !== $class) {
                 // not matched, but $param is an interface or class
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
-
-            } elseif ($param->isOptional()) {
-                // $param is optional, $arg is null
-                break;
-            } else {
-                throw new LogicException(
-                    Message::get(Message::DI_PARAMETER_NOTFOUND, $param->getName()),
-                    Message::DI_PARAMETER_NOTFOUND
-                );
             }
         }
 
-        // append remained arguments if any
-        if (!empty($providedArguments)) {
-            $resolvedArguments = array_merge($resolvedArguments, $providedArguments);
-        }
-
-        return $resolvedArguments;
+        return array_merge($resolvedArguments, $providedArguments);
     }
 
     /**
