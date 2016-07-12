@@ -21,6 +21,7 @@ use Phossa2\Di\Interfaces\AutoWiringInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
+use Phossa2\Shared\Reference\ReferenceInterface;
 
 /**
  * Resolver
@@ -109,7 +110,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
 
         // set up lookup pool
         $this->addRegistry($this->object_resolver)
-             ->addRegistry($this->config_resolver);
+            ->addRegistry($this->config_resolver);
     }
 
     /**
@@ -117,7 +118,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     public function resolve(&$toResolve)
     {
-        if (is_array($toResolve) || is_string($toResolve)) {
+        if ($this->config_resolver instanceof ReferenceInterface) {
             $this->config_resolver->deReferenceArray($toResolve);
         }
         return $this;
@@ -163,7 +164,8 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
         /*# string */ $section,
         $value
     ) {
-        return $this->set($this->getSectionId($id, $section), $value);
+        $this->set($this->getSectionId($id, $section), $value);
+        return $this;
     }
 
     /**

@@ -245,7 +245,6 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function setDelegator(DelegatorInterface $delegator)
     {
-        /* @var $delegator ContainerInterface */
         $this->delegator = $delegator;
         $this->getResolver()->setObjectResolver();
         return $this;
