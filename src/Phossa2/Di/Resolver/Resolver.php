@@ -19,7 +19,6 @@ use Phossa2\Config\Config;
 use Phossa2\Di\Interfaces\ResolverInterface;
 use Phossa2\Di\Interfaces\AutoWiringInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
-use Phossa2\Config\Interfaces\WritableInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
 use Phossa2\Shared\Reference\ReferenceInterface;
 
@@ -96,9 +95,6 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     ) {
         // set config and make it/self writable
         $this->config_resolver = $config;
-        if ($config instanceof WritableInterface) {
-            $config->setWritable(true);
-        }
 
         // set base node
         $this->base_node = $nodeName;
@@ -109,8 +105,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
         $this->setObjectResolver();
 
         // set up lookup pool
-        $this->addRegistry($this->object_resolver)
-            ->addRegistry($config);
+        $this->addRegistry($this->object_resolver)->addRegistry($config);
     }
 
     /**

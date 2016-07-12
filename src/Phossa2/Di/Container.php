@@ -122,16 +122,27 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      *
      * @param  ConfigInterface $config inject the config instance
      * @param  string $baseNode container's starting node in $config
+     * @param  bool $writable able to inject object to the container
      * @access public
      */
     public function __construct(
         ConfigInterface $config = null,
-        /*# string */ $baseNode = 'di'
+        /*# string */ $baseNode = 'di',
+        /*# bool */ $writable = true
     ) {
+        // config injected ?
+        if (null === $config) {
+            $config = new Config();
+        }
+
+        // container writable ?
+        if ($config instanceof WritableInterface) {
+            $this->setWritable($writable);
+            $config->setWritable($writable);
+        }
+
         // setup the $resolver
-        $this->setResolver(new Resolver(
-            $this, $config ?: (new Config()), $baseNode
-        ));
+        $this->setResolver(new Resolver($this, $config, $baseNode));
 
         // instance factory
         $this->setFactory(new Factory($this));

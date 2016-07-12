@@ -16,7 +16,6 @@ namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Container;
 use Phossa2\Di\Exception\LogicException;
-use Phossa2\Di\Message\Message;
 
 /**
  * FactoryTrait
@@ -111,13 +110,20 @@ trait FactoryTrait
         // result
         $resolvedArguments = [];
         foreach ($reflectionParameters as $i => $param) {
+            // is param a class or interface
             $class = $param->getClass();
+
+            // try match type
             if ($this->isTypeMatched($class, $providedArguments)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
+
+            // create object by classname if missing
             } elseif ($this->isRequiredClass($param, $providedArguments)) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
             }
         }
+
+        // merge any remained arguments
         return array_merge($resolvedArguments, $providedArguments);
     }
 
