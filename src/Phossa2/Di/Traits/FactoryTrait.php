@@ -156,17 +156,8 @@ trait FactoryTrait
         $optional = $param->isOptional();
         if ($param->getClass()) {
             return !$optional || !empty($arguments);
-        } elseif (($optional && empty($arguments))) {
-            return false;
         } else {
-            throw new LogicException(
-                Message::get(
-                    Message::DI_PARAMETER_MISMATCH,
-                    $param->getName(),
-                    $param->getDeclaringFunction()
-                ),
-                Message::DI_PARAMETER_MISMATCH
-            );
+            return false;
         }
     }
 
