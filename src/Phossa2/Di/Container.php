@@ -139,17 +139,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
             $config->setWritable($writable);
         }
 
-        // setup the $resolver
-        $this->setResolver(new Resolver($this, $config, $baseNode));
-
-        // instance factory
-        $this->setFactory(new Factory($this));
-
-        // register $this as 'di.service.container' in the resolver
-        $this->registerSelf();
-
-        // execute init methods defined in 'di.init' node of the $config
-        $this->initContainer();
+        $this->setResolver(new Resolver($this, $config, $baseNode))
+            ->setFactory(new Factory($this))->registerSelf()->initContainer();
     }
 
     /**
@@ -285,5 +276,6 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
                 ['class' => $this, 'skip' => $skipCommon]
             );
         }
+        return $this;
     }
 }
