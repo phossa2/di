@@ -83,6 +83,23 @@ class Delegator extends ObjectAbstract implements ContainerInterface, DelegatorI
     }
 
     /**
+     * Override 'isWritable()' in 'Phossa2\Config\Traits\WritableTrait'
+     * {@inheritDoc}
+     */
+    public function isWritable()/*# : bool */
+    {
+        foreach ($this->lookup_pool as $reg) {
+            if ($reg instanceof WritableInterface &&
+                $reg->isWritable()
+            ) {
+                $this->setWritable($reg);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * {@inheritDoc}
      */
     protected function isValidRegistry($registry)/*# : bool */

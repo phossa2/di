@@ -50,7 +50,7 @@ class ObjectResolver extends ObjectAbstract implements ConfigInterface, Delegato
      */
     public function get(/*# string */ $id, $default = null)
     {
-        if (static::isServiceId($id)) {
+        if ($this->has($id)) {
             return $this->getContainer()->get(static::getRawId($id));
         } else {
             return $default;

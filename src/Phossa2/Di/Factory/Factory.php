@@ -48,7 +48,7 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     public function createInstance(/*# string */ $rawId, array $arguments)
     {
-        // get definition
+        // get resolved definition
         $def = $this->getDefinition($rawId, $arguments);
 
         // arguments

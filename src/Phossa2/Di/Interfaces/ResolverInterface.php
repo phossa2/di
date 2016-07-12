@@ -73,6 +73,7 @@ interface ResolverInterface
      * @param  string $section section relative to the base
      * @param  mixed $value
      * @return $this
+     * @throws LogicException if not writable
      * @access public
      */
     public function setInSection(
@@ -133,6 +134,7 @@ interface ResolverInterface
      * @param  mixed $definition classname/callable/array/object etc.
      * @param  array $args constructor/callable arguments
      * @return $this
+     * @throws LogicException if not writable
      * @access public
      */
     public function setService(
@@ -193,6 +195,7 @@ interface ResolverInterface
      * @param  string $from interface or class name
      * @param  $to class name/${#service_id}/${parameter} or even callback
      * @return $this
+     * @throws LogicException if not writable
      * @access public
      */
     public function setMapping(/*# string */ $from, $to);

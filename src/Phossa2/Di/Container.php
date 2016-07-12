@@ -25,7 +25,6 @@ use Interop\Container\ContainerInterface;
 use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Shared\Reference\DelegatorInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
 use Phossa2\Di\Interfaces\FactoryAwareInterface;
@@ -120,18 +119,21 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      * $container = new $config['di.class']($config);
      * ```
      *
-     * @param  ConfigInterface $config inject the config instance
+     * @param  Config $config inject the config instance
      * @param  string $baseNode container's starting node in $config
      * @access public
      */
     public function __construct(
-        ConfigInterface $config = null,
+        Config $config = null,
         /*# string */ $baseNode = 'di'
     ) {
+        $conf = $config ?: new Config();
+
         $this
-            ->setResolver(new Resolver($this, $config ?: new Config(), $baseNode))
+            ->setResolver(new Resolver($this, $conf, $baseNode))
             ->setFactory(new Factory($this))
-            ->registerSelf()
+            ->registerObject('container', $this)
+            ->registerObject('config', $conf)
             ->initContainer();
     }
 
@@ -230,20 +232,22 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     }
 
     /**
-     * - Overwrite `setDelegator()` from DelegatorAwareTrait
-     * - Update resolver $object_resolver
+     * Override `setDelegator()` from 'Phossa2\Shared\Reference\DelegatorAwareTrait'
      *
      * {@inheritDoc}
      */
     public function setDelegator(DelegatorInterface $delegator)
     {
         $this->delegator = $delegator;
+
+        // this will make sure all dependencies will be looked up in the delegator
         $this->getResolver()->setObjectResolver();
+
         return $this;
     }
 
     /**
-     * Overwrite 'isWritable()' in WritableTrait
+     * Override 'isWritable()' in 'Phossa2\Config\Traits\WritableTrait'
      *
      * Container's writability is depend on its resolver
      *
@@ -255,11 +259,13 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     }
 
     /**
-     * Register $this as 'di.service.container'
+     * Register object in 'di.service' with $name
+     *
+     * e.g. `$this->registerObject('container', $this)`
      *
      * - Later, $this can be referenced as '${#container}' anywhere
      *
-     * - $skipCommon is to demonstrate skipping execute common methods for objects.
+     * - $object will skip execute common methods for created instances.
      *
      *   instead of just do
      *      `$container->set($name, $object)`
@@ -267,18 +273,15 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      *   you may do
      *      $container->set($name, ['class' => $object, 'skip' => true]);
      *
-     * @param  bool $skipCommon skip common methods normally after instantiation
+     * @param  string $name name to register with
+     * @param  object $object
      * @return $this
      * @access protected
      */
-    protected function registerSelf(/*# bool */ $skipCommon = false)
+    protected function registerObject(/*# string */ $name, $object)
     {
-        $name = 'container';
         if (!$this->has($name) && $this->isWritable()) {
-            $this->set(
-                $name,
-                ['class' => $this, 'skip' => $skipCommon]
-            );
+            $this->set($name, ['class' => $object, 'skip' => true]);
         }
         return $this;
     }

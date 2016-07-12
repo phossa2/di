@@ -55,7 +55,7 @@ trait FactoryTrait
             $def = ['class' => $def];
         }
 
-        // resolve arguments
+        // add resolved arguments
         if (!empty($args)) {
             $this->master->resolve($args);
             $def['args'] = $args;
@@ -252,6 +252,10 @@ trait FactoryTrait
 
     /**
      * Execute common methods defined in 'di.common' for all objects
+     *
+     * Methods are in the form of
+     *
+     *   [ testCallable($obj, $container), runCallable($obj, $container)]
      *
      * @param  object $object
      * @return $this

@@ -20,12 +20,12 @@ use Phossa2\Di\Interfaces\ResolverInterface;
 use Phossa2\Di\Interfaces\AutoWiringInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
-use Phossa2\Shared\Reference\ReferenceInterface;
 
 /**
  * Resolver
  *
  * - Resolver is a config delegator with
+ *
  *   - '#service_id' type of objects lookup
  *   - parameter config lookup.
  *
@@ -84,13 +84,13 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
 
     /**
      * @param  Container $master the master
-     * @param  ConfigInterface $config used for parameter resolving
+     * @param  Config $config used for parameter resolving
      * @param  string $nodeName
      * @access public
      */
     public function __construct(
         Container $master,
-        ConfigInterface $config,
+        Config $config,
         /*# string */ $nodeName
     ) {
         // set config and make it/self writable
@@ -113,9 +113,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     public function resolve(&$toResolve)
     {
-        if ($this->config_resolver instanceof ReferenceInterface) {
-            $this->config_resolver->deReferenceArray($toResolve);
-        }
+        $this->config_resolver->deReferenceArray($toResolve);
         return $this;
     }
 
@@ -168,7 +166,15 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     public function getService(/*# string */ $id = '')
     {
-        return $this->getInSection($id, 'service');
+        if ($this->hasInSection($id, 'service')) {
+            return $this->getInSection($id, 'service');
+
+        } else if ($this->autoClassName($id)) {
+            return ['class' => $id];
+
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -259,7 +265,6 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     protected function autoClassName(/*# string */ $id)/*# : bool */
     {
         if ($this->auto && class_exists($id)) {
-            $this->setService($id, ['class' => $id]);
             return true;
         }
         return false;
