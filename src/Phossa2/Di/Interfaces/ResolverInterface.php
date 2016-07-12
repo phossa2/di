@@ -12,12 +12,12 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Definition;
+namespace Phossa2\Di\Interfaces;
 
 /**
  * ResolverInterface
  *
- * Definition resolver dealing with instance/parameter/mapping etc.
+ * Resolveing instance/parameter/mapping etc.
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
@@ -27,95 +27,77 @@ namespace Phossa2\Di\Definition;
 interface ResolverInterface
 {
     /**
-     * Get $key from resolver
+     * Resolve all references in the $toResolve (either an array or string)
      *
-     * Returns NULL if not found
-     *
-     * @param  string $key key/name
-     * @param  string $section section relative to the base node
-     * @return mixed
-     * @access public
-     * @api
-     */
-    public function get(
-        /*# string */ $key,
-        /*# string */ $section = ''
-    );
-
-    /**
-     * Has $key exists in resolver ?
-     *
-     * @param  string $key key/name
-     * @param  string $section section relative to the base node
-     * @return bool
-     * @access public
-     * @api
-     */
-    public function has(
-        /*# string */ $key,
-        /*# string */ $section = ''
-    )/*# : bool */;
-
-    /**
-     * Set/replace/delete $key in resolver
-     *
-     * ```php
-     * // set a parameter
-     * $resolver->set('cache.root', '/var/tmp');
-     *
-     * // set with a reference
-     * $resolver->set('cache.root', '${tmp.dir}');
-     *
-     * // set with an array
-     * $resolver->set('cache', [
-     *     'root' => '/var/tmp',
-     *     'name' => 'session_cache',
-     *     'lifetime' => 86400
-     * ]);
-     * ```
-     *
-     * @param  string $key key/name
-     * @param  mixed $value the value, NULL is allowed
-     * @param  string $section section relative to the base node
+     * @param  mixed &$toResolve
      * @return $this
      * @access public
-     * @api
-     */
-    public function set(
-        /*# string */ $key,
-        $value,
-        /*# string */ $section = ''
-    );
-
-    /**
-     * Resolve any reference in the $toResolve (array or string)
-     *
-     * @param  mix &$toResolve
-     * @return $this
-     * @access public
-     * @api
      */
     public function resolve(&$toResolve);
 
     /**
-     * Get the $key in 'service' section
+     * Set the object resolver
      *
-     * @param  string $key key/name
-     * @return mixed
      * @access public
      * @api
      */
-    public function getService(/*# string */ $key);
+    public function setObjectResolver();
 
     /**
-     * Has the $key in 'service' section
+     * Get the $id in section
      *
-     * @param  string $key key/name
+     * @param  string $id key/name
+     * @param  string $section section relative to the base
+     * @return mixed
+     * @access public
+     */
+    public function getInSection(/*# string */ $id, /*# string */ $section);
+
+    /**
+     * Has the $id in section
+     *
+     * @param  string $id key/name
+     * @param  string $section section relative to the base
      * @return bool
      * @access public
-     * @api
      */
-    public function hasService(/*# string */ $key)/*# : bool */;
+    public function hasInSection(
+        /*# string */ $id,
+        /*# string */ $section
+    )/*# : bool */;
+
+    /**
+     * Add/overwrite in section
+     *
+     * @param  string $id key/name
+     * @param  string $section section relative to the base
+     * @param  mixed $value
+     * @return $this
+     * @access public
+     */
+    public function setInSection(
+        /*# string */ $id,
+        /*# string */ $section,
+        $value
+    );
+
+    /**
+     * Get the $id in 'service' section
+     *
+     * @param  string $id key/name
+     * @return mixed
+     * @access public
+     */
+    public function getService(/*# string */ $id = '');
+
+    /**
+     * Has the $id in 'service' section
+     *
+     * @param  string $id key/name
+     * @return bool
+     * @access public
+     */
+    public function hasService(/*# string */ $id = '')/*# : bool */;
 
     /**
      * Add/overwrite in service section
@@ -139,47 +121,46 @@ interface ResolverInterface
      *
      * // define service with a (pseudo) callable
      * $resolver->setService('logger', [${#event}, 'getLogger']);
+     *
+     * // define service with an array
+     * $resolver->setService('cache', [
+     *     'class' => 'Phossa2\\Cache\\CachePool',
+     *     'args'  => ['${#driver}']
+     * ]);
      * ```
      *
-     * @param  string $key key/name
+     * @param  string $id key/name
      * @param  mixed $definition classname/callable/array/object etc.
      * @param  array $arguments constructor/callable arguments
      * @return $this
      * @access public
-     * @api
      */
     public function setService(
-        /*# string */ $key,
+        /*# string */ $id,
         $definition,
         array $arguments = []
     );
 
     /**
-     * Get the $key in 'mapping' section
+     * Get the $id in 'mapping' section
      *
-     * @param  string $key key/name
+     * @param  string $id key/name
      * @return mixed string or callable etc.
      * @access public
-     * @api
      */
-    public function getMapping(/*# string */ $key);
+    public function getMapping(/*# string */ $id = '');
 
     /**
-     * Has the $key in 'mapping' section
+     * Has the $id in 'mapping' section
      *
-     * @param  string $key key/name
+     * @param  string $id key/name
      * @return bool
      * @access public
-     * @api
      */
-    public function hasMapping(/*# string */ $key)/*# : bool */;
+    public function hasMapping(/*# string */ $id = '')/*# : bool */;
 
     /**
      * Map an interface to a classname
-     *
-     * You may also map classname to child classname, map interface or
-     * classname to a service id reference '${#service_id}' or a parameter
-     * reference '${parameter.name}
      *
      * ```php
      * // map a interface => a classname
@@ -213,27 +194,6 @@ interface ResolverInterface
      * @param  $to class name/${#service_id}/${parameter} or even callback
      * @return $this
      * @access public
-     * @api
      */
     public function setMapping(/*# string */ $from, $to);
-
-    /**
-     * Turn on/off autowiring (auto classname resolving)
-     *
-     * @param  bool $on true or false
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function autoWiring(/*# bool */ $on = true);
-
-    /**
-     * Set the container definition starting node
-     *
-     * @param  string $nodeName
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function setBaseNode(/*# string */ $nodeName);
 }

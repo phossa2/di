@@ -15,57 +15,57 @@
 namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Message\Message;
-use Interop\Container\ContainerInterface;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Di\Interfaces\ContainerAwareInterface;
+use Phossa2\Di\Interfaces\FactoryInterface;
+use Phossa2\Di\Interfaces\FactoryAwareInterface;
 
 /**
- * ContainerAwareTrait
+ * FactoryAwareTrait
  *
- * Implementation of ContainerAwareInterface
+ * Implementation of FactoryAwareInterface
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
- * @see     ContainerAwareInterface
+ * @see     FactoryAwareInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-trait ContainerAwareTrait
+trait FactoryAwareTrait
 {
     /**
-     * @var    ContainerInterface
+     * @var    FactoryInterface
      * @access protected
      */
-    protected $container;
+    protected $factory;
 
     /**
      * {@inheritDoc}
      */
-    public function setContainer(ContainerInterface $container)
+    public function setFactory(FactoryInterface $factory)
     {
-        $this->container = $container;
+        $this->factory = $factory;
         return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getContainer()/*# : ContainerInterface */
+    public function getFactory()/*# : FactoryInterface */
     {
-        if ($this->hasContainer()) {
-            return $this->container;
+        if ($this->hasFactory()) {
+            return $this->factory;
         }
         throw new NotFoundException(
-            Message::get(Message::DI_CONTAINER_NOTFOUND),
-            Message::DI_CONTAINER_NOTFOUND
+            Message::get(Message::DI_FACTORY_NOTFOUND),
+            Message::DI_FACTORY_NOTFOUND
         );
     }
 
     /**
      * {@inheritDoc}
      */
-    public function hasContainer()/*# : bool */
+    public function hasFactory()/*# : bool */
     {
-        return null !== $this->container;
+        return null !== $this->factory;
     }
 }

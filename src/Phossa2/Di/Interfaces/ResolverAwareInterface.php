@@ -12,12 +12,13 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Definition;
+namespace Phossa2\Di\Interfaces;
+
+use Phossa2\Di\Exception\NotFoundException;
+
 
 /**
  * ResolverAwareInterface
- *
- * Able to use ResolverInterface
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
@@ -27,25 +28,31 @@ namespace Phossa2\Di\Definition;
 interface ResolverAwareInterface
 {
     /**
-     * Get the definition resolver
+     * Get the resolver
      *
      * @return ResolverInterface
+     * @throws NotFoundException if resolve not set
      * @access public
      * @api
      */
     public function getResolver()/*# : ResolverInterface */;
 
     /**
-     * Resolve reference in the string or array
+     * Set the resolver
      *
-     * - resolve string: '${system.tmpdir}/session'
-     * - resolve service: '${#cache}'
-     * - resolve array: ['${#cache}', 'getFromCache']
-     *
-     * @param  mixed &$toResolve
+     * @param  ResolverInterface $resolver
      * @return $this
      * @access public
      * @api
      */
-    public function resolve(&$toResolve);
+    public function setResolver(ResolverInterface $resolver);
+
+    /**
+     * Has resolver been set ?
+     *
+     * @return bool
+     * @access public
+     * @api
+     */
+    public function hasResolver()/*# : bool */;
 }

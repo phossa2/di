@@ -14,7 +14,7 @@
 
 namespace Phossa2\Di\Exception;
 
-use Phossa2\Shared\Exception\ExceptionInterface as PhossaExceptionInterface;
+use Phossa2\Shared\Exception\ExceptionInterface as Phossa2ExceptionInterface;
 
 /**
  * Exception marker for Phossa2\Di
@@ -25,6 +25,6 @@ use Phossa2\Shared\Exception\ExceptionInterface as PhossaExceptionInterface;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface ExceptionInterface extends PhossaExceptionInterface
+interface ExceptionInterface extends Phossa2ExceptionInterface
 {
 }

@@ -64,7 +64,7 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get definition
+     * Test get
      *
      * @cover Phossa2\Di\Definition\Resolver::get()
      */
@@ -74,12 +74,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             Delegator::getClassName(),
             $this->object->get('di.service.delegator.class')
-        );
-
-        // by section
-        $this->assertEquals(
-            Delegator::getClassName(),
-            $this->object->get('delegator.class', 'service')
         );
 
         // return NULL if not found
@@ -96,7 +90,20 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test has definition
+     * Test get in section
+     *
+     * @cover Phossa2\Di\Definition\Resolver::getInSection()
+     */
+    public function testGetInSection()
+    {
+        $this->assertEquals(
+            Delegator::getClassName(),
+            $this->object->getInSection('delegator.class', 'service')
+        );
+    }
+
+    /**
+     * Test has
      *
      * @cover Phossa2\Di\Definition\Resolver::has()
      */
@@ -107,11 +114,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
             $this->object->has('di.service.delegator.class')
         );
 
-        // by section
-        $this->assertTrue(
-            $this->object->has('delegator.class', 'service')
-        );
-
         // return FALSE if not found
         $this->assertFalse(
             $this->object->has('no.such.node')
@@ -119,7 +121,19 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test set definition
+     * Test has in section
+     *
+     * @cover Phossa2\Di\Definition\Resolver::hasInSection()
+     */
+    public function testHasInSection()
+    {
+        $this->assertTrue(
+            $this->object->hasInSection('delegator.class', 'service')
+        );
+    }
+
+    /**
+     * Test set
      *
      * @cover Phossa2\Di\Definition\Resolver::set()
      */
@@ -138,15 +152,22 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
             '12',
             $this->object->get('no.such.node')
         );
+    }
 
-        // by section
+    /**
+     * Test set in section
+     *
+     * @cover Phossa2\Di\Definition\Resolver::setInSection()
+     */
+    public function testSetInSection()
+    {
         $this->assertFalse(
-            $this->object->has('no.such.node', 'mapping')
+            $this->object->hasInSection('no.such.node', 'mapping')
         );
-        $this->object->set('no.such.node', '10', 'mapping');
+        $this->object->setInSection('no.such.node', 'mapping', '10');
         $this->assertEquals(
             '10',
-            $this->object->get('no.such.node', 'mapping')
+            $this->object->getInSection('no.such.node', 'mapping')
         );
     }
 
@@ -268,31 +289,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
             'wow',
             $this->object->getMapping('no.such.node')
         );
-    }
-
-    /**
-     * Test set base node
-     *
-     * @cover Phossa2\Di\Definition\Resolver::setBaseNode()
-     */
-    public function testSetBaseNode()
-    {
-        // using default basenode 'di'
-        $this->assertTrue($this->object->hasService('delegator'));
-
-        // reset basenode
-        $this->object->setBaseNode('di2');
-
-        $this->assertEquals('di2', $this->getPrivateProperty('base_node'));
-
-        // not found
-        $this->assertFalse($this->object->hasService('delegator'));
-
-        // revert to default basenode
-        $this->object->setBaseNode('di');
-
-        // found again
-        $this->assertTrue($this->object->hasService('delegator'));
     }
 
     /**

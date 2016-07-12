@@ -12,19 +12,25 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Exception;
-
-use Interop\Container\Exception\NotFoundException as NFException;
+namespace Phossa2\Di\Interfaces;
 
 /**
- * Alias of Interop NotFoundException interface
+ * AutoWiringInterface
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
- * @see     \Interop\Container\Exception\NotFoundException
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface NotFoundExceptionInterface extends NFException
+interface AutoWiringInterface
 {
+    /**
+     * Turn on/off autowiring (auto classname resolving)
+     *
+     * @param  bool $on true or false
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function autoWiring(/*# bool */ $on = true);
 }

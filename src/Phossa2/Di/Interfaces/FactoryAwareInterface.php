@@ -14,45 +14,44 @@
 
 namespace Phossa2\Di\Interfaces;
 
-use Interop\Container\ContainerInterface;
 use Phossa2\Di\Exception\NotFoundException;
 
 /**
- * ContainerAwareInterface
+ * FactoryAwareInterface
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface ContainerAwareInterface
+interface FactoryAwareInterface
 {
     /**
-     * Inject the container
+     * Inject the Factory
      *
-     * @param  ContainerInterface $container
+     * @param  FactoryInterface $factory
      * @return $this
      * @access public
      * @api
      */
-    public function setContainer(ContainerInterface $container);
+    public function setFactory(FactoryInterface $factory);
 
     /**
-     * Get the container
+     * Get the Factory
      *
-     * @return ContainerInterface
+     * @return FactoryInterface
      * @access public
-     * @throws NotFoundException if container not found
+     * @throws NotFoundException if factory not found
      * @api
      */
-    public function getContainer()/*# : ContainerInterface */;
+    public function getFactory()/*# : FactoryInterface */;
 
     /**
-     * Has the container ?
+     * Has the Factory ?
      *
      * @return bool
      * @access public
      * @api
      */
-    public function hasContainer()/*# : bool */;
+    public function hasFactory()/*# : bool */;
 }

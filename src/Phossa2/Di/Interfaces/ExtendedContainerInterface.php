@@ -15,11 +15,12 @@
 namespace Phossa2\Di\Interfaces;
 
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Exception\RuntimeException;
 
 /**
  * ExtendedContainerInterface
  *
- * Couple of extended funtionalities
+ * Extended funtionalities for a container
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
@@ -29,32 +30,17 @@ use Phossa2\Di\Exception\LogicException;
 interface ExtendedContainerInterface
 {
     /**
-     * Store the instance as $id, $id may have scope defined
+     * Get a NEW service instance IF scope is NOT explicitly defined
      *
-     *
-     * @param  string $id
-     * @param  mixed $object
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function set(/*# string */ $id, $object);
-
-    /**
-     * Get a NEW service instance even if it was defined as shared
-     *
-     * Arguments can have references as follows
+     * Explicitly defined means: ['class' => ..., 'scope' => '__SHARED__']
      *
      * ```php
-     * // reference other service
+     * // get a new cache instance using shared cache driver
      * $cache = $container->one('cache', ['${#cache_driver}']);
-     *
-     * // parameters are allowed
-     * $cache = $container->one('cache', ['${#cache_driver}', '${cache.id}']);
      * ```
      *
      * @param  string $id service id
-     * @param  array $arguments (optional) arguments
+     * @param  array $arguments (optional) new arguments for the constructor
      * @return object
      * @throws LogicException if anything goes wrong
      * @access public
@@ -63,7 +49,7 @@ interface ExtendedContainerInterface
     public function one(/*# string */ $id, array $arguments = []);
 
     /**
-     * Execute a callable or pseudo callable with its arguments
+     * Execute a callable(maybe pseudo) with the given arguments
      *
      * ```php
      * // pseudo callable using service reference string
@@ -77,9 +63,19 @@ interface ExtendedContainerInterface
      * @param  array $arguments (optional) arguments
      * @return mixed
      * @throws LogicException if container goes wrong
-     * @throws \Exception if execution goes wrong
+     * @throws RuntimeException if execution goes wrong
      * @access public
      * @api
      */
     public function run($callable, array $arguments = []);
+
+    /**
+     * Resolve all references in the $toResolve (either an array or string)
+     *
+     * @param  mixed &$toResolve
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function resolve(&$toResolve);
 }

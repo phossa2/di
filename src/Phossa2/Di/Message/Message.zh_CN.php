@@ -29,4 +29,7 @@ return [
     Message::DI_SERVICE_NOTFOUND => '服务实例  "%s" 没有找到',
     Message::DI_LOOP_DETECTED => '对象容器发现 "%s" 死循环',
     Message::DI_PARAMETER_NOTFOUND => '参数 "%s" 没有匹配',
+    Message::DI_RESOLVER_NOTFOUND => '搜寻器没有设置',
+    Message::DI_FACTORY_NOTFOUND => '实例工厂没有设置',
+    Message::DI_CONTAINER_READONLY => '向只读的对象容器写入 "%s"',
 ];

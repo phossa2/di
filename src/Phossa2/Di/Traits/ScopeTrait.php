@@ -15,7 +15,6 @@
 namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Interfaces\ScopeInterface;
-use Phossa2\Di\Definition\ResolverAwareTrait;
 
 /**
  * ScopeTrait
@@ -51,6 +50,14 @@ trait ScopeTrait
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function getDefaultScope()/*# : string */
+    {
+        return $this->default_scope;
+    }
+
+    /**
      * Split 'service_id@scope' into ['service_id', 'scope']
      *
      * if no scope found, use ''
@@ -69,6 +76,30 @@ trait ScopeTrait
     }
 
     /**
+     * Return the raw id without scope
+     *
+     * @param  string $id
+     * @return string
+     * @access protected
+     */
+    protected function idWithoutScope(/*# string */ $id)/*# : string */
+    {
+        return $this->splitId($id)[0];
+    }
+
+    /**
+     * Get the scope part of $id
+     *
+     * @param  string $id
+     * @return string
+     * @access protected
+     */
+    protected function getScopeOfId(/*# string */ $id)/*# : string */
+    {
+        return $this->splitId($id)[1];
+    }
+
+    /**
      * Append a scope to the $id, if old scope exists, replace it
      *
      * @param  string $id
@@ -80,11 +111,11 @@ trait ScopeTrait
         /*# string */ $id,
         /*# string */ $scope
     )/*# : string */ {
-        return $this->splitId($id)[0] . '@' . $scope;
+        return $this->idWithoutScope($id) . '@' . $scope;
     }
 
     /**
-     * Returns the raw id and the calculated scope
+     * Returns the raw id and the scope base on default or predefined
      *
      * @param  string $id
      * @return array [rawId, scope]
@@ -98,10 +129,10 @@ trait ScopeTrait
         // use the default scope if no scope given
         $scope = empty($scope) ? $this->default_scope : $scope;
 
-        // honor forced scope
-        $definition = $this->getResolver()->getService($rawId);
-        if (is_array($definition) && isset($definition['scope'])) {
-            $scope = $definition['scope'];
+        // honor predefined scope
+        $def = $this->getResolver()->getService($rawId);
+        if (is_array($def) && isset($def['scope'])) {
+            $scope = $def['scope'];
         }
 
         return [$rawId, $scope];

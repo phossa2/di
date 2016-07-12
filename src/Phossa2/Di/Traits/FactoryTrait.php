@@ -14,6 +14,7 @@
 
 namespace Phossa2\Di\Traits;
 
+use Phossa2\Di\Container;
 use Phossa2\Di\Message\Message;
 use Phossa2\Di\Exception\LogicException;
 
@@ -29,104 +30,39 @@ use Phossa2\Di\Exception\LogicException;
  */
 trait FactoryTrait
 {
-    use UtilityTrait;
-
     /**
-     * for loop detection
-     *
-     * @var    array
+     * @var    Container
      * @access protected
      */
-    protected $loop = [];
+    protected $master;
 
     /**
-     * a counter
+     * Get service definition (and fix it)
      *
-     * @var    int
-     * @access protected
-     */
-    protected $counter = 0;
-
-    /**
-     * Full scope info
-     *
-     * @param  string $id
+     * @param  string $rawId
+     * @param  array $args
      * @return array
      * @access protected
      */
-    protected function fullScopeInfo(/*# string */ $id)/*# : array */
-    {
-        list($rawId, $scope) = $this->scopedInfo($id);
+    protected function getDefinition(
+        /*# string */ $rawId,
+        array $args
+    )/*# : array */ {
+        // get the definition
+        $def = $this->master->getResolver()->getService($rawId);
 
-        // special treatment if $scope is a '#service_id'
-        if (isset($this->loop[$scope])) {
-            $scope .= '_' . $this->loop[$scope];
+        // fix class
+        if (!is_array($def) || !isset($def['class'])) {
+            $def = ['class' => $def];
         }
 
-        return [$rawId, $this->scopedId($rawId, $scope), $scope];
-    }
-
-    /**
-     * Create the instance with loop detection
-     *
-     * @param  string $rawId
-     * @param  array $args arguments for the constructor if any
-     * @return object
-     * @throws LogicException if instantiation goes wrong or loop detected
-     * @access protected
-     */
-    protected function createInstance(/*# string */ $rawId, array $args)
-    {
-        // conver 'service_id' to '#service_id'
-        $serviceId = $this->getServiceId($rawId);
-
-        // loop detected
-        if (isset($this->loop[$serviceId])) {
-            throw new LogicException(
-                Message::get(Message::DI_LOOP_DETECTED, $rawId),
-                Message::DI_LOOP_DETECTED
-            );
+        // resolve arguments
+        if (!empty($args)) {
+            $this->master->resolve($args);
+            $def['args'] = $args;
         }
 
-        // set loop marker
-        $this->loop[$serviceId] = ++$this->counter;
-
-        // create the service instance
-        $obj = $this->createFromId($rawId, $args);
-
-        // remove current marker
-        unset($this->loop[$serviceId]);
-
-        return $obj;
-    }
-
-    /**
-     * Create object base on the raw id
-     *
-     * @param  string $rawId
-     * @param  array $arguments
-     * @return object
-     * @throws LogicException if instantiation goes wrong
-     * @access protected
-     */
-    protected function createFromId(/*# string */ $rawId, array $arguments)
-    {
-        // get definition
-        $def = $this->getDefinition($rawId, $arguments);
-
-        if (is_string($def['class'])) {
-            // classname
-            $obj = $this->constructObject($def['class'], $def['args']);
-
-        } else {
-            // object or callable etc.
-            $obj = $this->executeCallable($def['class'], $def['args']);
-        }
-
-        // after creation
-        $this->afterCreation($obj, $def);
-
-        return $obj;
+        return (array) $def;
     }
 
     /**
@@ -160,105 +96,191 @@ trait FactoryTrait
     }
 
     /**
-     * Execute a (pseudo) callable with arguments
+     * Match provided arguments with a method/function's reflection parameters
      *
-     * @param  callable|array|object $callable callable or pseudo callable
-     * @param  array $arguments
-     * @return mixed
+     * @param  \ReflectionParameter[] $reflectionParameters
+     * @param  array $providedArguments
+     * @return array the resolved arguments
+     * @throws LogicException
+     * @throws NotFoundException
+     * @access protected
+     */
+    protected function matchArguments(
+        array $reflectionParameters,
+        array $providedArguments
+    )/*# : array */ {
+        // result
+        $resolvedArguments = [];
+
+        // go thru each predefined parameter
+        foreach ($reflectionParameters as $i => $param) {
+            // arg to match with
+            $argument = isset($providedArguments[0]) ? $providedArguments[0] : null;
+
+            // check the class
+            $class = $param->getClass();
+
+            if ($this->isTypeMatched($param, $argument, $class)) {
+                // type matched
+                $resolvedArguments[$i] = array_shift($providedArguments);
+
+            } elseif (null !== $class) {
+                // not matched, but $param is an interface or class
+                $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
+
+            } elseif ($param->isOptional()) {
+                // $param is optional, $arg is null
+                break;
+            } else {
+                throw new LogicException(
+                    Message::get(Message::DI_PARAMETER_NOTFOUND, $param->getName()),
+                    Message::DI_PARAMETER_NOTFOUND
+                );
+            }
+        }
+
+        // append remained arguments if any
+        if (!empty($providedArguments)) {
+            $resolvedArguments = array_merge($resolvedArguments, $providedArguments);
+        }
+
+        return $resolvedArguments;
+    }
+
+    /**
+     * Is $parameter same type as the $argument ?
+     *
+     * @param  \ReflectionParameter $parameter
+     * @param  mixed $argument
+     * @param  null|string $class
+     * @return bool
+     * @access protected
+     */
+    protected function isTypeMatched(
+        \ReflectionParameter $parameter,
+        $argument,
+        $class
+    )/*# : bool */ {
+        if (null === $argument) {
+            return false;
+        } elseif (null !== $class) {
+            return is_a($argument, $parameter->getClass()->getName());
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Get an object base on provided classname or interface name
+     *
+     * @param  string $classname class or interface name
+     * @return object
+     * @throws \Exception if something goes wrong
+     * @access protected
+     */
+    protected function getObjectByClass(/*# string */ $classname)
+    {
+        // mapping exists
+        if ($this->master->getResolver()->hasMapping($classname)) {
+            $classname = $this->master->getResolver()->getMapping($classname);
+            if (is_object($classname)) {
+                return $classname;
+            }
+        }
+        return $this->master->getResolver()->get($classname);
+    }
+
+    /**
+     * Get callable parameters
+     *
+     * @param  callable $callable
+     * @return \ReflectionParameter[]
      * @throws LogicException if something goes wrong
      * @access protected
      */
-    protected function executeCallable($callable, array $arguments = [])
+    protected function getCallableParameters(callable $callable)/*# : array */
     {
-        // not callable
-        if (!is_callable($callable)) {
-            return $callable;
+        // array type
+        if (is_array($callable)) {
+            $reflector = new \ReflectionClass($callable[0]);
+            $method = $reflector->getMethod($callable[1]);
+
+        // object with __invoke() defined
+        } elseif ($this->isInvocable($callable)) {
+            $reflector = new \ReflectionClass($callable);
+            $method = $reflector->getMethod('__invoke');
+
+        // simple function
+        } else {
+            $method = new \ReflectionFunction($callable);
         }
 
-        if (!empty($arguments)) {
-            $params = $this->getCallableParameters($callable);
-            $args = $this->matchArguments($params, $arguments);
-            return call_user_func_array($callable, $args);
-        } else {
-            return call_user_func($callable);
-        }
+        return $method->getParameters();
     }
 
     /**
-     * Things to do after object created.
+     * Is $var an object with '__invoke()' defined ?
      *
-     * @param  object $object
-     * @param  array $definition service definition for $object
+     * @param  mixed $var
+     * @return bool
      * @access protected
      */
-    protected function afterCreation($object, array $definition)
+    protected function isInvocable($var)/*# : bool */
     {
-        // execute methods of this object
-        $this->executeObjectMethods($object, $definition);
-
-        // execute common methods for all objects
-        $this->executeCommonMethods($object);
+        return is_object($var) && method_exists($var, '__invoke');
     }
 
     /**
-     * Execute objects's own methods defined in its 'node.methods'
+     * Merge different sections of a node
+     *
+     * convert
+     *   `['section1' => [[1], [2]], 'section2' => [[3], [4]]]`
+     *
+     * to
+     *   `[[1], [2], [3], [4]]`
+     *
+     * @param  array $nodeData
+     * @return array
+     * @access protected
+     */
+    protected function mergeMethods(array $nodeData)/*# : array */
+    {
+        // no merge
+        if (empty($nodeData) || isset($nodeData[0])) {
+            return $nodeData;
+        }
+
+        // in sections
+        $result = [];
+        foreach ($nodeData as $data) {
+            $result = array_merge($result, $data);
+        }
+        return $result;
+    }
+
+    /**
+     * Execute common methods defined in 'di.common' for all objects
      *
      * @param  object $object
      * @return $this
      * @access protected
      */
-    protected function executeObjectMethods($object, array $definition)
+    protected function executeCommonBatch($object)
     {
-        if (isset($definition['methods'])) {
-            foreach ($definition['methods'] as $method) {
-                $this->executeMethod($method, $object);
+        $methods = [];
+
+        // get from 'di.common'
+        if ($this->master->getResolver()->hasInSection('', 'common')) {
+            $methods = $this->mergeMethods(
+                $this->master->getResolver()->getInSection('', 'common')
+            );
+        }
+
+        foreach ($methods as $method) {
+            if (call_user_func($method[0], $object, $this->master)) {
+                call_user_func($method[1], $object, $this->master);
             }
         }
         return $this;
-    }
-
-    /**
-     * Execute common methods defined in 'di.common' for objects
-     *
-     * @param  object $object
-     * @return $this
-     * @access protected
-     */
-    protected function executeCommonMethods($object)
-    {
-        if ($this->getResolver()->has('', 'common')) {
-            $methods = $this->mergeNodeInfo($this->getResolver()->get('', 'common'));
-            $this->executeTester($object, $methods);
-        }
-        return $this;
-    }
-
-    /**
-     * Rebuild callable base methodName and object
-     *
-     * method:
-     * - ['function', [ arguments...]]
-     *
-     * - [ callable, [ arguments ...]]
-     *
-     * - ['method', [ arguments ...]]
-     *   convert to [[$object, 'method'], [ ... ]]
-     *
-     * @param  mixed method
-     * @param  object|null $object to construct callable
-     * @throws LogicException if something goes wrong
-     * @access protected
-     */
-    protected function executeMethod($method, $object = null)
-    {
-        $callable  = $method[0];
-        $arguments = isset($method[1]) ? $method[1] : [];
-
-        // rebuild callable from $object
-        if (null !== $object) {
-            $callable = [$object, $callable];
-        }
-
-        $this->executeCallable($callable, $arguments);
     }
 }

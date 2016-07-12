@@ -47,6 +47,21 @@ class Message extends BaseMessage
      */
     const DI_PARAMETER_NOTFOUND = 1607061010;
 
+    /*
+     * Resolver not found
+     */
+    const DI_RESOLVER_NOTFOUND = 1607061011;
+
+    /*
+     * Factory not found
+     */
+    const DI_FACTORY_NOTFOUND = 1607061012;
+
+    /*
+     * Write to readonly container with "%s"
+     */
+    const DI_CONTAINER_READONLY = 1607061013;
+
     /**
      * {@inheritDoc}
      */
@@ -55,5 +70,8 @@ class Message extends BaseMessage
         self::DI_SERVICE_NOTFOUND => 'Service instance "%s" not found',
         self::DI_LOOP_DETECTED => 'Container loop detected for "%s"',
         self::DI_PARAMETER_NOTFOUND => 'Parameter "%s" not matched',
+        self::DI_RESOLVER_NOTFOUND => 'Resolver not found',
+        self::DI_FACTORY_NOTFOUND => 'Factory not found',
+        self::DI_CONTAINER_READONLY => 'Write to readonly container with "%s"',
     ];
 }

@@ -14,6 +14,8 @@
 
 namespace Phossa2\Di\Exception;
 
+use Interop\Container\Exception\ContainerException;
+
 /**
  * LogicException for Phossa2\Di
  *
@@ -25,6 +27,6 @@ namespace Phossa2\Di\Exception;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class LogicException extends \LogicException implements ExceptionInterface, ContainerExceptionInterface
+class LogicException extends \LogicException implements ExceptionInterface, ContainerException
 {
 }

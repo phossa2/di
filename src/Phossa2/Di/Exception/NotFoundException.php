@@ -14,6 +14,10 @@
 
 namespace Phossa2\Di\Exception;
 
+use Interop\Container\Exception\ContainerException;
+use Interop\Container\Exception\NotFoundException as NotFoundExceptionInterface;
+
+
 /**
  * NotFoundException for Phossa2\Di
  *
@@ -25,6 +29,6 @@ namespace Phossa2\Di\Exception;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class NotFoundException extends \RuntimeException implements ExceptionInterface, NotFoundExceptionInterface, ContainerExceptionInterface
+class NotFoundException extends \RuntimeException implements ExceptionInterface, NotFoundExceptionInterface, ContainerException
 {
 }

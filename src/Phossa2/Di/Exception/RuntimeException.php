@@ -12,21 +12,22 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Interfaces;
+namespace Phossa2\Di\Exception;
 
-use Interop\Container\ContainerInterface as ICContainerInterface;
+use Interop\Container\Exception\ContainerException;
+
 
 /**
- * ContainerInterface
- *
- * Alias of Interop or PSR ContainerInterface
+ * RuntimeException for Phossa2\Di
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
- * @see     \Interop\Container\ContainerInterface
+ * @see     \RuntimeException
+ * @see     ExceptionInterface
+ * @see     ContainerExceptionInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface ContainerInterface extends ICContainerInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface, ContainerException
 {
 }

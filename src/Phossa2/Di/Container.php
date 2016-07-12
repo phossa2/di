@@ -16,48 +16,81 @@ namespace Phossa2\Di;
 
 use Phossa2\Config\Config;
 use Phossa2\Di\Message\Message;
-use Phossa2\Di\Traits\FactoryTrait;
-use Phossa2\Di\Definition\Resolver;
+use Phossa2\Di\Factory\Factory;
+use Phossa2\Di\Resolver\Resolver;
+use Phossa2\Di\Traits\ContainerTrait;
+use Phossa2\Di\Traits\ArrayAccessTrait;
 use Phossa2\Shared\Base\ObjectAbstract;
-use Phossa2\Di\Exception\LogicException;
+use Interop\Container\ContainerInterface;
 use Phossa2\Di\Interfaces\ScopeInterface;
+use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Di\Definition\ResolverInterface;
-use Phossa2\Di\Interfaces\ContainerInterface;
-use Phossa2\Di\Definition\ResolverAwareInterface;
+use Phossa2\Config\Interfaces\ConfigInterface;
+use Phossa2\Shared\Reference\DelegatorInterface;
+use Phossa2\Config\Interfaces\WritableInterface;
+use Phossa2\Di\Interfaces\FactoryAwareInterface;
+use Phossa2\Di\Interfaces\ResolverAwareInterface;
+use Phossa2\Shared\Reference\DelegatorAwareTrait;
 use Phossa2\Di\Interfaces\ExtendedContainerInterface;
+use Phossa2\Shared\Reference\DelegatorAwareInterface;
 
 /**
  * Container
  *
+ * A writable, array accessable, delegator-aware and extended instance container.
+ *
+ * - writable:
+ *
+ *   ```php
+ *   $container->set('cache', $cache);
+ *   ```
+ *
+ * - array accessable:
+ *
+ *   ```php
+ *   // get
+ *   $cache = $container['cache'];
+ *
+ *   // set/replace
+ *   $container['cache'] = $anotherCache;
+ *   ```
+ *
+ * - delegator-aware: lookup dependent instances in the delegator
+ *
+ *   ```php
+ *   $delegator->addRegistry($container);
+ *   ```
+ *
+ * - extended container
+ *
+ *   ```php
+ *   // get new instance
+ *   $newCache = $container->one('cache');
+ *
+ *   // run callables
+ *   $container->run(['${#logger}', 'warning'], ['A warning message from ${user}']);
+ *   ```
+ *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     ObjectAbstract
+ * @see     ScopeInterface
  * @see     ContainerInterface
  * @see     ResolverAwareInterface
- * @see     ScopeInterface
+ * @see     FactoryAwareInterface
  * @see     ExtendedContainerInterface
+ * @see     DelegatorAwareInterface
+ * @see     WritableInterface
+ * @see     \ArrayAccess
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class Container extends ObjectAbstract implements ContainerInterface, ResolverAwareInterface, ScopeInterface, ExtendedContainerInterface
+class Container extends ObjectAbstract implements ContainerInterface, ResolverAwareInterface, FactoryAwareInterface, ScopeInterface, ExtendedContainerInterface, DelegatorAwareInterface, \ArrayAccess, WritableInterface
 {
-    use FactoryTrait;
+    use ContainerTrait, ArrayAccessTrait, DelegatorAwareTrait;
 
     /**
-     * instances pool
-     *
-     * @var    object[]
-     * @access protected
-     */
-    protected $pool = [];
-
-    /**
-     * Constructor
-     *
-     * Inject a config instance which will provide configs for all the
-     * definitions, parameters, mappings. $nodeName is the starting node
-     * in the $config for container. normally it is the 'di' node.
+     * Inject a Phossa2\Config\Config
      *
      * ```php
      * $configData = [
@@ -80,40 +113,41 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      *     ],
      * ];
      *
-     * // init $config
+     * // instantiate $config
      * $config = new Config(null, null, $configData);
      *
-     * // init container
+     * // instantiate container
      * $container = new $config['di.class']($config);
      * ```
      *
-     * @param  Config $config
-     * @param  ResolverInterface $resolver if injected
-     * @param  string $baseNode starting node
+     * @param  ConfigInterface $config inject the config instance
+     * @param  string $baseNode container's starting node in $config
      * @access public
      */
     public function __construct(
-        Config $config = null,
-        ResolverInterface $resolver = null,
+        ConfigInterface $config = null,
         /*# string */ $baseNode = 'di'
     ) {
-        // setup the resolver
-        if (null === $resolver) {
-            $resolver = new Resolver($this, $config ?: (new Config()), $baseNode);
-        }
+        // setup the $resolver
+        $this->setResolver(new Resolver(
+            $this, $config ?: (new Config()), $baseNode
+        ));
 
-        $this->setResolver($resolver->setBaseNode($baseNode));
+        // instance factory
+        $this->setFactory(new Factory($this));
 
-        // reserve 'di.service.container', later can be used as '${#container}'
+        // register $this as 'di.service.container' in the resolver
         $this->registerSelf();
 
-        // execute init methods defined in 'di.init' node
-        $this->executeNode($baseNode . '.init');
+        // execute init methods defined in 'di.init' node of the $config
+        $this->initContainer();
     }
 
     /**
-     * - Accepting second param as constructor arguments
-     * - Accpeting $id with scope like 'cache@myScope'
+     * Extensions to the Interop\Container\ContainerInterface
+     *
+     * - Accepting second param as object constructor arguments
+     * - Accpeting $id with scope appended, e.g. 'cache@myScope'
      *
      * {@inheritDoc}
      */
@@ -127,22 +161,25 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
             );
         }
 
-        // get the instance
+        // get the instance, constructor args if any
         return $this->getInstance(
             $id, func_num_args() > 1 ? func_get_arg(1) : []
         );
     }
 
     /**
-     * - Accpeting $id with scope like 'cache@myScope'
+     * Extensions to the Interop\Container\ContainerInterface
+     *
+     * - Accpeting $id with scope appended, e.g. 'cache@myScope'
      *
      * {@inheritDoc}
      */
     public function has($id)
     {
         if (is_string($id)) {
-            $rawId = $this->splitId($id)[0];
-            return $this->getResolver()->hasService($rawId);
+            return $this->getResolver()->hasService(
+                $this->idWithoutScope($id)
+            );
         }
         return false;
     }
@@ -150,17 +187,21 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * {@inheritDoc}
      */
-    public function set(/*# string */ $id, $object)
+    public function set(/*# string */ $id, $value)
     {
-        list($rawId, $scope) = $this->splitId($id);
-        $this->getResolver()->setService($rawId, $object);
-
-        // if $scope found, put this instance in the pool
-        if (!empty($scope) && is_object($object)) {
-            $this->pool[$id] = $object;
+        if ($this->isWritable()) {
+            // set in service definition
+            $this->getResolver()->setService(
+                $this->idWithoutScope($id),
+                $value
+            );
+            return $this;
+        } else {
+            throw new RuntimeException(
+                Message::get(Message::DI_CONTAINER_READONLY, $id),
+                Message::DI_CONTAINER_READONLY
+            );
         }
-
-        return $this;
     }
 
     /**
@@ -168,6 +209,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function one(/*# string */ $id, array $arguments = [])
     {
+        // set in single scope
         return $this->get(
             $this->scopedId($id, self::SCOPE_SINGLE),
             $arguments
@@ -179,96 +221,61 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
      */
     public function run($callable, array $arguments = [])
     {
-        // resolve external stuff
+        // resolve any references in the callable(array) and arguments
         $this->resolve($callable);
         $this->resolve($arguments);
 
-        return $this->executeCallable($callable, $arguments);
+        return $this->getFactory()->executeCallable($callable, $arguments);
     }
 
     /**
-     * Register 'container' in container to be used as '${#container}' later
-     *
-     * @return $this
-     * @access protected
+     * {@inheritDoc}
      */
-    protected function registerSelf()
+    public function resolve(&$toResolve)
     {
-        // set in definition
-        $this->set(
-            'container',
-            ['class' => $this, 'scope' => self::SCOPE_SHARED]
-        );
-
-        // put in the pool to skip running common methods
-        $this->pool[$this->scopedId('container', self::SCOPE_SHARED)] = $this;
-
+        $this->getResolver()->resolve($toResolve);
         return $this;
     }
 
     /**
-     * Execute methods defined in the node
+     * - Overwrite `setDelegator()` from DelegatorAwareTrait
+     * - Update resolver $object_resolver
      *
-     * ```php
-     * $node = [
-     *    'section1' => [
-     *        [callable1, arguments],
-     *        ...
-     *    ],
-     *    'section2' => [
-     *        ...
-     *    ],
-     *    ...
-     * ];
-     * ```
-     *
-     * @param  string $nodeName
-     * @return $this
-     * @access protected
+     * {@inheritDoc}
      */
-    protected function executeNode(/*# string */ $nodeName)
+    public function setDelegator(DelegatorInterface $delegator)
     {
-        // Is node defined ?
-        if (!$this->getResolver()->has($nodeName)) {
-            return;
-        }
-
-        // get the node
-        $nodeData = $this->getResolver()->get($nodeName);
-
-        // merge all methods from the node
-        $methods = $this->mergeNodeInfo($nodeData);
-
-        // execute in batch
-        foreach ($methods as $method) {
-            $this->executeMethod($method);
-        }
+        /* @var $delegator ContainerInterface */
+        $this->delegator = $delegator;
+        $this->getResolver()->setObjectResolver();
+        return $this;
     }
 
     /**
-     * Get the instance either from the pool or create it
+     * Register $this as 'di.service.container'
      *
-     * @param  string $id service id with or without the scope
-     * @param  array $args arguments for the constructor
-     * @return object
-     * @throws LogicException if instantiation goes wrong
+     * - Later, $this can be referenced as '${#container}' anywhere
+     *
+     * - $skipCommon is to demonstrate skipping execute common methods for objects.
+     *
+     *   instead of just do
+     *      `$container->set($name, $object)`
+     *
+     *   you may do
+     *      $container->set($name, ['class' => $object, 'skip' => true]);
+     *
+     * @param  bool $skipCommon skip common methods normally after instantiation
+     * @return $this
      * @access protected
      */
-    protected function getInstance(/*# string */ $id, array $args)
+    protected function registerSelf(/*# bool */ $skipCommon = false)
     {
-        // get id & scope info
-        list($rawId, $scopedId, $scope) = $this->fullScopeInfo($id);
-
-        // get a new instance if args or in single scope
-        if (!empty($args) || ScopeInterface::SCOPE_SINGLE === $scope) {
-            return $this->createInstance($rawId, $args);
+        $name = 'container';
+        if (!$this->has($name) && $this->isWritable()) {
+            $this->set(
+                $name,
+                ['class' => $this, 'skip' => $skipCommon]
+            );
         }
-
-        // if not in the pool, create one
-        if (!isset($this->pool[$scopedId])) {
-            $this->pool[$scopedId] = $this->createInstance($rawId, []);
-        }
-
-        return $this->pool[$scopedId];
     }
 }
