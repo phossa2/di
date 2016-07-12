@@ -24,6 +24,7 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
         $container = new Container(new Config(
             new ConfigFileLoader(__DIR__ . '/data')
         ));
+
         $this->object = $container->getResolver();
     }
 
