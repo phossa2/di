@@ -130,12 +130,10 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         /*# string */ $baseNode = 'di',
         /*# bool */ $writable = true
     ) {
-        // config injected ?
         if (null === $config) {
             $config = new Config();
         }
 
-        // container writable ?
         if ($config instanceof WritableInterface) {
             $this->setWritable($writable);
             $config->setWritable($writable);
