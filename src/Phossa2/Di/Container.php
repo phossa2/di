@@ -128,10 +128,11 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
         ConfigInterface $config = null,
         /*# string */ $baseNode = 'di'
     ) {
-        $this->setResolver(new Resolver($this, $config ?: new Config(), $baseNode))
-             ->setFactory(new Factory($this))
-             ->registerSelf()
-             ->initContainer();
+        $this
+            ->setResolver(new Resolver($this, $config ?: new Config(), $baseNode))
+            ->setFactory(new Factory($this))
+            ->registerSelf()
+            ->initContainer();
     }
 
     /**
@@ -242,11 +243,15 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     }
 
     /**
+     * Overwrite 'isWritable()' in WritableTrait
+     *
+     * Container's writability is depend on its resolver
+     *
      * {@inheritDoc}
      */
     public function isWritable()/*# : bool */
     {
-        return false !== $this->writable;
+        return $this->getResolver()->isWritable();
     }
 
     /**
