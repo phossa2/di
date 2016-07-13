@@ -83,6 +83,27 @@ interface ExtendedContainerInterface
     public function map(/*# string */ $from, $to);
 
     /**
+     * On or off autowiring
+     *
+     * @param  bool $on turn on or turn off
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function auto(/*# bool */ $on = true);
+
+    /**
+     * Set up a parameter, later can be used as ${parameter}
+     *
+     * @param  string $name
+     * @param  mixed $to
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function param(/*# string */ $name, $value);
+
+    /**
      * Resolve all references in the $toResolve (either an array or string)
      *
      * @param  mixed &$toResolve

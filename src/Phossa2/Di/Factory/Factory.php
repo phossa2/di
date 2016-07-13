@@ -120,7 +120,10 @@ class Factory extends ObjectAbstract implements FactoryInterface
         $arguments = isset($method[1]) ? $method[1] : [];
 
         // rebuild callable from $object
-        if (null !== $object) {
+        if (null !== $object &&
+            is_string($callable) &&
+            method_exists($object, $callable)
+        ) {
             $callable = [$object, $callable];
         }
 
@@ -145,5 +148,40 @@ class Factory extends ObjectAbstract implements FactoryInterface
         if (!isset($definition['skip']) || !$definition['skip']) {
             $this->executeCommonBatch($object);
         }
+    }
+
+    /**
+     * Execute common methods defined in 'di.common' for all objects
+     *
+     * Methods are in the form of
+     *
+     *   [ interfaceOrClassname, [methodOrCallable, ArgumentsArray]],
+     *   [ testCallable($obj, $container), [methodOrCallable, ArgumentsArray],
+     *   ...
+     *
+     * @param  object $object
+     * @return $this
+     * @access protected
+     */
+    protected function executeCommonBatch($object)
+    {
+        $methods = [];
+
+        // get methods from 'di.common'
+        if ($this->master->getResolver()->hasInSection('', 'common')) {
+            $methods = $this->mergeMethods(
+                $this->master->getResolver()->getInSection('', 'common')
+            );
+        }
+
+        foreach ($methods as $method) {
+            $tester = $method[0];
+            if (is_string($tester) && is_a($object, $tester) ||
+                call_user_func($tester, $object, $this->master)
+            ) {
+                $this->executeMethod($method[1], $object);
+            }
+        }
+        return $this;
     }
 }

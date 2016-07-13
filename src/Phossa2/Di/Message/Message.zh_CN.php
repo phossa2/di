@@ -33,4 +33,5 @@ return [
     Message::DI_FACTORY_NOTFOUND => '实例工厂没有设置',
     Message::DI_CONTAINER_READONLY => '向只读的对象容器写入 "%s"',
     Message::DI_PARAMETER_MISMATCH => '参数 "%s" （函数 "%s"）匹配错误',
+    Message::DI_CLASS_UNKNOWN => '发现未知类 "%s"',
 ];

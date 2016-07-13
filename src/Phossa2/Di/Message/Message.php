@@ -67,6 +67,11 @@ class Message extends BaseMessage
      */
     const DI_PARAMETER_MISMATCH = 1607061014;
 
+    /*
+     * Unknown dependent class or interface "%s"
+     */
+    const DI_CLASS_UNKNOWN = 1607061015;
+
     /**
      * {@inheritDoc}
      */
@@ -79,5 +84,6 @@ class Message extends BaseMessage
         self::DI_FACTORY_NOTFOUND => 'Factory not found',
         self::DI_CONTAINER_READONLY => 'Write to readonly container with "%s"',
         self::DI_PARAMETER_MISMATCH => 'Parameter "%s" mismatched for method "%s"',
+        self::DI_CLASS_UNKNOWN => 'Unknown dependent class or interface "%s"',
     ];
 }

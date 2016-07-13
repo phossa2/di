@@ -52,7 +52,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     public function testGet2()
     {
         // turnoff autowiring
-        $this->object->getResolver()->autoWiring(false);
+        $this->object->auto(false);
 
         // add service 'cache'
         $this->object->set('cache', [
@@ -87,5 +87,111 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($container->has('cache'));
         $this->assertTrue($container->get('cache') instanceof \MyCache);
+    }
+
+    /**
+     * Test turn off autowiring
+     *
+     * @cover Phossa2\Di\Container::auto()
+     * @expectedException Phossa2\Di\Exception\NotFoundException
+     * @expectedExceptionCode Phossa2\Di\Message\Message::DI_SERVICE_NOTFOUND
+     */
+    public function testAuto()
+    {
+        $this->object->auto(false);
+        $this->assertFalse($this->object->has('MyCache'));
+        $this->assertTrue($this->object->get('MyCache') instanceof \MyCache);
+    }
+
+    /**
+     * Test mapping to a classname
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap1()
+    {
+        $this->object->map('DriverInterface', 'MyCacheDriver');
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test mapping to a callback returns a classname
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap2()
+    {
+        $this->object->map('DriverInterface', function() {
+            return 'MyCacheDriver';
+        });
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test mapping to a callback returns an object
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap3()
+    {
+        $this->object->map('DriverInterface', function() {
+            return new \MyCacheDriver();
+        });
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test mapping to an object directly
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap4()
+    {
+        $this->object->map('DriverInterface', new \MyCacheDriver());
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test mapping to service reference
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap5()
+    {
+        // set a service
+        $this->object->set('thedriver', new \MyCacheDriver());
+
+        // map to a service reference
+        $this->object->map('DriverInterface', '${#thedriver}');
+
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test mapping to paramter reference
+     *
+     * @cover Phossa2\Di\Container::map()
+     */
+    public function testMap6()
+    {
+        // setup a parameter
+        $this->object->param('the.driver', 'MyCacheDriver');
+
+        // map to a parameter reference
+        $this->object->map('DriverInterface', '${the.driver}');
+
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test failed mapping
+     *
+     * @cover Phossa2\Di\Container::map()
+     * @expectedException Phossa2\Di\Exception\LogicException
+     * @expectedExceptionCode Phossa2\Di\Message\Message::DI_CLASS_UNKNOWN
+     */
+    public function testMap7()
+    {
+        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
 }

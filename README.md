@@ -69,7 +69,7 @@ Usage
   }
   ```
 
-  Get the `MyCache` instance using the DI container automatically,
+  Get the `MyCache` instance automatically using the DI container,
 
   ```php
   use Phossa2\Di\Container;
@@ -103,9 +103,6 @@ Usage
   // create the container
   $container = new Container();
 
-  // turn off autowiring
-  $container->getResolver()->autoWiring(false);
-
   // add service with id 'cache'
   $container->set('cache', [
       'class' => 'MyCache', // classname
@@ -122,7 +119,7 @@ Usage
   ```
 
   A service reference `'${#driver}'` used in the constructor arguments here
-  indicating it is `driver` service (object).
+  indicating it is the `driver` service (object).
 
 - With configuration from files or data array
 
@@ -167,22 +164,140 @@ Usage
   // instantiate container with $config instance with base node is 'di'
   $container = new Container($config, 'di');
 
-  // now get by defined service id 'cache' (di.service.cache)
+  // get service by id 'cache' (di.service.cache)
   $cache = $container->get('cache');
 
   // true
   var_dump($cache instanceof \MyCache);
   ```
 
-  By default, the container related configurations are under the node `di` and the
-  service definitions are under `di.service` in the `$config` instance.
-
-
+  By default, container related configurations are under the node `di` and service
+  definitions are under the `di.service` node of the `$config` instance.
 
 Features
 ---
 
+- <a name="auto"></a>**Autowiring and mapping**
 
+  *Autowiring* is the ability of container instantiating objects and resolving its
+  dependencies automatically by their classname or interface name. The base for
+  autowiring is the PHP function parameter *type-hinting*.
+
+  By reflecting on class, constructor and methods, *phossa2/di* is able to find
+  the right class for the instance (user need to use the classname as the service
+  id) and right classes for its dependencies (type-hinted with the classnames).
+
+  If interface name is used for dependency type-hint, users may set up the mapping
+  of interfaces to the right classnames as follows,
+
+  ```php
+  // map an interface to a classname
+  $container->map(
+      'Phossa2\\Cache\\CachePoolInterface', // MUST NO leading backslash
+      'Phossa2\\Cache\\CachePool'
+  );
+
+  // map an interface to a service id reference
+  $container->map('Phossa\\Cache\\CachePoolInterface', '${#cache}');
+
+  // map an interface to a parameter reference
+  $container->map('Phossa\\Cache\\CachePoolInterface', '${cache.class}');
+
+  // map an interface to a callback
+  $container->map('Phossa\\Cache\\CachePoolInterface', function() {
+      return new \Phossa2\Cache\CachePool();
+  });
+  ```
+
+  Or define mappings in the config node `di.mapping` as follows,
+
+  ```php
+  $configData = [
+      // ...
+      'di.mapping' => [
+          'Phossa\\Cache\\CachePoolInterface' => '${cache.class}',
+          // ...
+      ],
+      // ...
+  ];
+  ```
+
+  Autowiring can be turned on/off. Turn off autowiring will enable user to check
+  any defintion errors without automatic loading.
+
+  ```php
+  // turn off auto wiring
+  $container->auto(false);
+
+  // turn on auto wiring
+  $container->auto(true);
+  ```
+
+- <a name="decorate"></a>**Object decorating**
+
+  *Object decorating* is to apply decorating changes (run methods etc.) right
+  after the instantiation of a service instance base on certain criteria such
+  as it implements an interface.
+
+  - Decorating methods for *individual instance* only
+
+    ```php
+    $container->set('cache', [
+        'class'   => 'Phossa2\\Cache\\Cache',
+        'args'    => ['${#cachedriver}'], // constructor arguments
+        'methods' => [
+            ['clearCache'], // cache method with no arguments
+            ['setLogger', ['${#logger}']], // method with arguments
+            [[$logger, 'setLabel'], ['cache_label']], // callable with arguments
+            [['${#driver}, 'init']], // pseduo callable
+            // ...
+        ],
+    ]);
+    ```
+
+    By adding `methods` section into the `cache` service definition in the format of
+    `[ callableOrMethodName, OptionalArgumentArray ]`, these methods will be executed
+    right after `cache` instantiation.
+
+    `callableOrMethodName` here can be,
+
+    - method name of the cache instance
+
+    - a valid callable
+
+    - a psedudo callable with references. After resolving the references, it is a
+      valid callable.
+
+    `OptionalArgumentArray` here can be,
+
+    - empty
+
+    - array of values or references
+
+  - Common decorating methods for *all instances*
+
+  ```php
+  $configData = [
+      // common methods for all instances
+      'di.common' => [
+          // interface name and method
+          ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
+
+          // tester callable and method
+          [function($object, $container) {
+              return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
+          }, ['setLogger', ['${#logger}']]],
+      ],
+  ];
+  ```
+
+  Common methods can be configured in the 'di.common' node to apply to all the
+  instances right after their instantiation. The definition consists of two parts,
+  the first is an interface/classname or a callable takes current instance and
+  the container as parameters. The second part is in the same method format
+  mentioned before.
+
+  'skip'
 
 APIs
 ---

@@ -14,9 +14,6 @@
 
 namespace Phossa2\Di\Exception;
 
-use Interop\Container\Exception\ContainerException;
-
-
 /**
  * RuntimeException for Phossa2\Di
  *
@@ -24,10 +21,9 @@ use Interop\Container\Exception\ContainerException;
  * @author  Hong Zhang <phossa@126.com>
  * @see     \RuntimeException
  * @see     ExceptionInterface
- * @see     ContainerExceptionInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class RuntimeException extends \RuntimeException implements ExceptionInterface, ContainerException
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

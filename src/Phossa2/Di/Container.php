@@ -234,6 +234,24 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * {@inheritDoc}
      */
+    public function auto(/*# bool */ $on = true)
+    {
+        $this->getResolver()->autoWiring($on);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function param(/*# string */ $name, $value)
+    {
+        $this->getResolver()->set((string) $name, $value);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function resolve(&$toResolve)
     {
         $this->getResolver()->resolve($toResolve);

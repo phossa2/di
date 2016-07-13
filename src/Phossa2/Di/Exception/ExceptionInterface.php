@@ -14,6 +14,7 @@
 
 namespace Phossa2\Di\Exception;
 
+use Interop\Container\Exception\ContainerException;
 use Phossa2\Shared\Exception\ExceptionInterface as Phossa2ExceptionInterface;
 
 /**
@@ -22,9 +23,10 @@ use Phossa2\Shared\Exception\ExceptionInterface as Phossa2ExceptionInterface;
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     \Phossa2\Shared\Exception\ExceptionInterface
+ * @see     ContainerException
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface ExceptionInterface extends Phossa2ExceptionInterface
+interface ExceptionInterface extends Phossa2ExceptionInterface, ContainerException
 {
 }

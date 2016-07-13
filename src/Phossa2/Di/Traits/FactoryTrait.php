@@ -17,6 +17,7 @@ namespace Phossa2\Di\Traits;
 use Phossa2\Di\Container;
 use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Resolver\ObjectResolver;
+use Phossa2\Di\Message\Message;
 
 /**
  * FactoryTrait
@@ -173,13 +174,27 @@ trait FactoryTrait
      */
     protected function getObjectByClass(/*# string */ $classname)
     {
-        // de-mapping of $classname
+        $mapped = $classname;
+
+        // resolve mapping
         if ($this->master->getResolver()->hasMapping($classname)) {
-            $classname = $this->master->getResolver()->getMapping($classname);
+            $mapped = $this->master->getResolver()->getMapping($classname);
         }
 
-        // now, $classname is either an object, callable or classname
-        return $this->getObjectByType($classname);
+        // get object by mapping or classname
+        $obj = $this->getObjectByType($mapped, $classname);
+
+        // found
+        if (is_a($obj, $classname, false)) {
+            return $obj;
+
+        // failure
+        } else {
+            throw new LogicException(
+                Message::get(Message::DI_CLASS_UNKNOWN, $classname),
+                Message::DI_CLASS_UNKNOWN
+            );
+        }
     }
 
     /**
@@ -211,7 +226,7 @@ trait FactoryTrait
     }
 
     /**
-     * Is $var an object with '__invoke()' defined ?
+     * Is $var a non-closure object with '__invoke()' defined ?
      *
      * @param  mixed $var
      * @return bool
@@ -219,32 +234,38 @@ trait FactoryTrait
      */
     protected function isInvocable($var)/*# : bool */
     {
-        return is_object($var) && method_exists($var, '__invoke');
+        return is_object($var) &&
+            !$var instanceof \Closure &&
+            method_exists($var, '__invoke');
     }
 
     /**
-     * Get object by different input type
+     * Get object by different mapped
      *
-     * @param  mixed $class
+     * @param  mixed $mapped
+     * @param  string $classname
      * @return object
      * @access protected
      */
-    protected function getObjectByType($class)
+    protected function getObjectByType($mapped, /*# string */ $classname)
     {
-        // result of the callable
-        if (is_callable($class) && !$this->isInvocable($class)) {
-            $class = call_user_func($class);
+        // matched object
+        if (is_a($mapped, $classname, false)) {
+            return $mapped;
         }
 
-        // object
-        if (is_object($class)) {
-            return $class;
+        // callable
+        if (is_callable($mapped)) {
+            $mapped = call_user_func($mapped);
+        }
 
         // string
-        } else {
-            $serviceId = ObjectResolver::getServiceId($class);
-            return $this->master->getResolver()->get($serviceId);
+        if (is_string($mapped)) {
+            $serviceId = ObjectResolver::getServiceId($mapped);
+            $mapped = $this->master->getResolver()->get($serviceId);
         }
+
+        return $mapped;
     }
 
     /**
@@ -273,35 +294,5 @@ trait FactoryTrait
             $result = array_merge($result, $data);
         }
         return $result;
-    }
-
-    /**
-     * Execute common methods defined in 'di.common' for all objects
-     *
-     * Methods are in the form of
-     *
-     *   [ testCallable($obj, $container), runCallable($obj, $container)]
-     *
-     * @param  object $object
-     * @return $this
-     * @access protected
-     */
-    protected function executeCommonBatch($object)
-    {
-        $methods = [];
-
-        // get from 'di.common'
-        if ($this->master->getResolver()->hasInSection('', 'common')) {
-            $methods = $this->mergeMethods(
-                $this->master->getResolver()->getInSection('', 'common')
-            );
-        }
-
-        foreach ($methods as $method) {
-            if (call_user_func($method[0], $object, $this->master)) {
-                call_user_func($method[1], $object, $this->master);
-            }
-        }
-        return $this;
     }
 }
