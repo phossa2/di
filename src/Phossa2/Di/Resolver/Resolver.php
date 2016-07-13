@@ -20,6 +20,7 @@ use Phossa2\Di\Interfaces\ResolverInterface;
 use Phossa2\Di\Interfaces\AutoWiringInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
+use Phossa2\Shared\Reference\ReferenceInterface;
 
 /**
  * Resolver
@@ -113,7 +114,9 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     public function resolve(&$toResolve)
     {
-        $this->config_resolver->deReferenceArray($toResolve);
+        if ($this->config_resolver instanceof ReferenceInterface) {
+            $this->config_resolver->deReferenceArray($toResolve);
+        }
         return $this;
     }
 

@@ -70,6 +70,19 @@ interface ExtendedContainerInterface
     public function run($callable, array $arguments = []);
 
     /**
+     * Map an interface or classname to something else.
+     *
+     * e.g. to another classname, reference or callback etc.
+     *
+     * @param  string $from
+     * @param  mixed $to
+     * @return $this
+     * @access public
+     * @api
+     */
+    public function map(/*# string */ $from, $to);
+
+    /**
      * Resolve all references in the $toResolve (either an array or string)
      *
      * @param  mixed &$toResolve

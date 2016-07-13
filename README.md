@@ -7,9 +7,9 @@
 [![License](https://poser.pugx.org/phossa2/di/license)](http://mit-license.org/)
 
 **phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop] implementation
-and dependency injection library for PHP. It builds upon the versatile
-[phossa2/config][config] and supports [autowiring](#auto),
-[container delegation](#delegate), [configuration delegation][#confdel],
+of dependency injection library for PHP. It builds upon the versatile
+[phossa2/config][config] library and supports [autowiring](#auto),
+[container delegation](#delegate), [configuration delegation](#confdel),
 [object decorating](#decorate), [object scope](#scope) and more.
 
 It requires PHP 5.4, supports PHP 7.0+ and HHVM. It is compliant with
@@ -45,7 +45,7 @@ or add the following lines to your `composer.json`
 Usage
 ---
 
-- With autowiring of predefined classes.
+- With *autowiring* of classes.
 
   A couple of predefined simple classes as follows,
 
@@ -69,12 +69,12 @@ Usage
   }
   ```
 
-  Get the `MyCache` instance automatically,
+  Get the `MyCache` instance using the DI container automatically,
 
   ```php
   use Phossa2\Di\Container;
 
-  // load predefined classes
+  // should be aware of these classes
   require_once __DIR__ . '/cache.php';
 
   // create the container
@@ -97,7 +97,7 @@ Usage
   ```php
   use Phossa2\Di\Container;
 
-  // load predefined classes
+  // should be aware of these classes
   require_once __DIR__ . '/cache.php';
 
   // create the container
@@ -106,7 +106,7 @@ Usage
   // turn off autowiring
   $container->getResolver()->autoWiring(false);
 
-  // add service 'cache'
+  // add service with id 'cache'
   $container->set('cache', [
       'class' => 'MyCache', // classname
       'args'  => ['${#driver}'] // constructor arguments
@@ -121,11 +121,14 @@ Usage
   var_dump($container->get('cache') instanceof \MyCache); // true
   ```
 
-- With configuration
+  A service reference `'${#driver}'` used in the constructor arguments here
+  indicating it is `driver` service (object).
+
+- With configuration from files or data array
 
   Container may use a `Phossa2\Config\Config` instance as its definitions for
   services. The `Phossa2\Config\Config` instance may either read configs from files
-  or get configs from an array as follows,
+  or get configs from a data array as follows,
 
   ```php
   use Phossa2\Di\Container;
@@ -161,10 +164,10 @@ Usage
   // create $config instance with provided data
   $config = new Config(null, null, $configData);
 
-  // instantiate container with $config instance, and node is 'di'
+  // instantiate container with $config instance with base node is 'di'
   $container = new Container($config, 'di');
 
-  // now get by defined service id 'cache'
+  // now get by defined service id 'cache' (di.service.cache)
   $cache = $container->get('cache');
 
   // true
@@ -174,7 +177,7 @@ Usage
   By default, the container related configurations are under the node `di` and the
   service definitions are under `di.service` in the `$config` instance.
 
-  A service reference `'${#driver}'` indicates the 'driver' service.
+
 
 Features
 ---

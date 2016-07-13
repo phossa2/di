@@ -225,6 +225,15 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     /**
      * {@inheritDoc}
      */
+    public function map(/*# string */ $from, $to)
+    {
+        $this->getResolver()->setMapping($from, $to);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function resolve(&$toResolve)
     {
         $this->getResolver()->resolve($toResolve);

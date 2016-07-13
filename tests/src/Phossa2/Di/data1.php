@@ -12,7 +12,23 @@ class MyCache
     // ...
 }
 
-class MyCacheDriver
+class MyCacheDriver implements DriverInterface
 {
+    // ...
+}
+
+interface DriverInterface {
+    // ...
+}
+
+class YourCache
+{
+    private $driver;
+
+    public function __construct(DriverInterface $driver)
+    {
+        $this->driver = $driver;
+    }
+
     // ...
 }
