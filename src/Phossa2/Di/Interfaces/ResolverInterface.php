@@ -186,7 +186,7 @@ interface ResolverInterface
      * // map to a callable
      * $resolver->setMapping(
      *     'Phossa2\\Cache\\CachePoolInterface',
-     *     functino() {
+     *     function() {
      *         return new Phossa2\Cache\Cache();
      *     }
      * );

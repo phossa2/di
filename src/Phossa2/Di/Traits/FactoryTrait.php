@@ -16,6 +16,7 @@ namespace Phossa2\Di\Traits;
 
 use Phossa2\Di\Container;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Resolver\ObjectResolver;
 
 /**
  * FactoryTrait
@@ -172,14 +173,13 @@ trait FactoryTrait
      */
     protected function getObjectByClass(/*# string */ $classname)
     {
-        // mapping exists
+        // de-mapping of $classname
         if ($this->master->getResolver()->hasMapping($classname)) {
             $classname = $this->master->getResolver()->getMapping($classname);
-            if (is_object($classname)) {
-                return $classname;
-            }
         }
-        return $this->master->getResolver()->get($classname);
+
+        // now, $classname is either an object, callable or classname
+        return $this->getObjectByType($classname);
     }
 
     /**
@@ -220,6 +220,31 @@ trait FactoryTrait
     protected function isInvocable($var)/*# : bool */
     {
         return is_object($var) && method_exists($var, '__invoke');
+    }
+
+    /**
+     * Get object by different input type
+     *
+     * @param  mixed $class
+     * @return object
+     * @access protected
+     */
+    protected function getObjectByType($class)
+    {
+        // result of the callable
+        if (is_callable($class) && !$this->isInvocable($class)) {
+            $class = call_user_func($class);
+        }
+
+        // object
+        if (is_object($class)) {
+            return $class;
+
+        // string
+        } else {
+            $serviceId = ObjectResolver::getServiceId($class);
+            return $this->master->getResolver()->get($serviceId);
+        }
     }
 
     /**

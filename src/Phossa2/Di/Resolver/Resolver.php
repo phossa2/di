@@ -166,9 +166,11 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     public function getService(/*# string */ $id = '')
     {
+        // get from service section
         if ($this->hasInSection($id, 'service')) {
             return $this->getInSection($id, 'service');
 
+        // autowiring support
         } else if ($this->autoClassName($id)) {
             return ['class' => $id];
 
