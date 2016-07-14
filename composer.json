@@ -14,7 +14,7 @@
     "require": {
         "php": ">=5.4.0",
         "phossa2/shared": "^2.0.14",
-        "phossa2/config": "dev-master",
+        "phossa2/config": "^2.0.6",
         "container-interop/container-interop": "~1.0"
     },
     "autoload": {

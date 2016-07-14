@@ -15,8 +15,7 @@
 namespace Phossa2\Di\Interfaces;
 
 use Interop\Container\ContainerInterface;
-use Phossa2\Shared\Reference\DelegatorInterface;
-use Phossa2\Config\Interfaces\WritableInterface;
+use Phossa2\Shared\Reference\DelegatorInterface as GenericDelegatorInterface;
 
 /**
  * DelegatorInterface
@@ -26,12 +25,11 @@ use Phossa2\Config\Interfaces\WritableInterface;
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     ContainerInterface
- * @see     DelegatorInterface
- * @see     WritableInterface
+ * @see     \Phossa2\Shared\Reference\DelegatorInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface DelegatorInterface extends DelegatorInterface, ContainerInterface, WritableInterface
+interface DelegatorInterface extends GenericDelegatorInterface, ContainerInterface
 {
     /**
      * Add container

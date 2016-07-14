@@ -20,7 +20,6 @@ use Phossa2\Shared\Base\ObjectAbstract;
 use Interop\Container\ContainerInterface;
 use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Shared\Reference\DelegatorTrait;
 use Phossa2\Di\Interfaces\DelegatorInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
 use Phossa2\Config\Traits\DelegatorWritableTrait;
@@ -33,16 +32,15 @@ use Phossa2\Config\Traits\DelegatorWritableTrait;
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     ObjectAbstract
- * @see     ContainerInterface
  * @see     DelegatorInterface
  * @see     WritableInterface
  * @see     \ArrayAccess
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAccess
+class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAccess, WritableInterface
 {
-    use DelegatorTrait, ArrayAccessTrait, DelegatorWritableTrait;
+    use ArrayAccessTrait, DelegatorWritableTrait;
 
     /**
      * {@inheritDoc}
