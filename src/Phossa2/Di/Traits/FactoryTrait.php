@@ -176,19 +176,14 @@ trait FactoryTrait
     {
         $mapped = $classname;
 
-        // resolve mapping
+        // has mapping ?
         if ($this->master->getResolver()->hasMapping($classname)) {
             $mapped = $this->master->getResolver()->getMapping($classname);
         }
-
-        // get object by mapping or classname
         $obj = $this->getObjectByType($mapped, $classname);
 
-        // found
         if (is_a($obj, $classname, false)) {
             return $obj;
-
-        // failure
         } else {
             throw new LogicException(
                 Message::get(Message::DI_CLASS_UNKNOWN, $classname),

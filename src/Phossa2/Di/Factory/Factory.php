@@ -120,8 +120,7 @@ class Factory extends ObjectAbstract implements FactoryInterface
         $arguments = isset($method[1]) ? $method[1] : [];
 
         // rebuild callable from $object
-        if (null !== $object &&
-            is_string($callable) &&
+        if (is_string($callable) &&
             method_exists($object, $callable)
         ) {
             $callable = [$object, $callable];

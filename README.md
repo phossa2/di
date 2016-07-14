@@ -9,8 +9,8 @@
 **phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop] implementation
 of dependency injection library for PHP. It builds upon the versatile
 [phossa2/config][config] library and supports [autowiring](#auto),
-[container delegation](#delegate), [configuration delegation](#confdel),
-[object decorating](#decorate), [object scope](#scope) and more.
+[container delegation](#delegate), [object decorating](#decorate),
+[object scope](#scope) and more.
 
 It requires PHP 5.4, supports PHP 7.0+ and HHVM. It is compliant with
 [PSR-1][PSR-1], [PSR-2][PSR-2], [PSR-4][PSR-4], and coming [PSR-5][PSR-5],
@@ -177,6 +177,58 @@ Usage
 Features
 ---
 
+- <a name="ref"></a>**References**
+
+  References in the format of '${reference}' can be used to refer to predefined
+  parameters from the config or services in the container.
+
+  - Parameter references
+
+    See [reference](https://github.com/phossa2/config#ref) for detail. Parameter
+    references are read from configuration files or can be defined by `param()` as
+    follows,
+
+    ```php
+    // define a new parameter
+    $container->param('cache.dir', '${system.tmpdir}/cache');
+
+    // use the cache.dir parameter
+    $container->set('cache', [
+        'class' => '${cache.class}', // predefined in file
+        'args'  => ['${cache.dir}']  // just defined before
+    ]);
+    ```
+
+  - Service references
+
+    Service reference in the format of '${#service_id}' can be used to referring
+    a service in the container (or in the [delegator](#delegate)).
+
+    ```php
+    $container->set('cache', [
+        'class' => '${cache.class}',
+        'args'  => ['${#cache_driver}'] // service reference
+    ]);
+    ```
+
+    Two *reserved* service references are '${#container}' and '${#config}'. These
+    two are refering the container instance itself and the config instance it is
+    using. These two can be used just like other service references.
+
+  - Using references
+
+    References can be used anywhere in the configs or as the arguments for all
+    container methods(except for the paramter `$id` of the method).
+
+    ```php
+    // log a warning message
+    $container->run(['${#logger}', 'warning'], ['warning from ${log.facility}']);
+
+    // resolve references
+    $data = ['${system.dir}', '${#logger}'];
+    $container->resolve($data); // all references in $data are resolved now
+    ```
+
 - <a name="auto"></a>**Autowiring and mapping**
 
   *Autowiring* is the ability of container instantiating objects and resolving its
@@ -236,8 +288,7 @@ Features
 - <a name="decorate"></a>**Object decorating**
 
   *Object decorating* is to apply decorating changes (run methods etc.) right
-  after the instantiation of a service instance base on certain criteria such
-  as it implements an interface.
+  after the instantiation of a service instance.
 
   - Decorating methods for *individual instance* only
 
@@ -276,28 +327,28 @@ Features
 
   - Common decorating methods for *all instances*
 
-  ```php
-  $configData = [
-      // common methods for all instances
-      'di.common' => [
-          // interface name and method
-          ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
+    ```php
+    $configData = [
+        // common methods for all instances
+        'di.common' => [
+            // interface name and method
+            ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
 
-          // tester callable and method
-          [function($object, $container) {
-              return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
-          }, ['setLogger', ['${#logger}']]],
-      ],
-  ];
-  ```
+            // tester callable and method
+            [function($object, $container) {
+                return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
+            }, ['setLogger', ['${#logger}']]],
+        ],
+    ];
+    ```
 
-  Common methods can be configured in the 'di.common' node to apply to all the
-  instances right after their instantiation. The definition consists of two parts,
-  the first is an interface/classname or a callable takes current instance and
-  the container as parameters. The second part is in the same method format
-  mentioned before.
+    Common methods can be configured in the 'di.common' node to apply to all the
+    instances right after their instantiation. The definition consists of two parts,
+    the first is an interface/classname or a callable takes current instance and
+    the container as parameters. The second part is in the same method format
+    mentioned before.
 
-  'skip'
+    'skip'
 
 APIs
 ---
