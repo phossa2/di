@@ -10,11 +10,17 @@ class MyCache
     }
 
     // ...
+    public function runMethod1() {
+        echo "runMethod1_";
+    }
 }
 
 class MyCacheDriver implements DriverInterface
 {
     // ...
+    public function driverMethod() {
+        echo "driverMethod_";
+    }
 }
 
 interface DriverInterface {

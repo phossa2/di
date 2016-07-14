@@ -91,9 +91,7 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     public function executeMethodBatch(array $methods, $object = null)
     {
-        $merged = $this->mergeMethods($methods);
-
-        foreach ($merged as $method) {
+        foreach ($this->mergeMethods($methods) as $method) {
             $this->executeMethod($method, $object);
         }
     }
@@ -102,31 +100,34 @@ class Factory extends ObjectAbstract implements FactoryInterface
      * if $object provided, build callable like [$object, $method] and execute it.
      *
      * method:
-     * - ['function', [ arguments...]]
      *
-     * - [ callable, [ arguments ...]]
+     * - callable
      *
-     * - ['method', [ arguments ...]]
-     *   convert to [[$object, 'method'], [ ... ]]
+     * - array ['function', [ arguments...]]
      *
-     * @param  mixed method
+     * - array [callable, [ arguments ...]]
+     *
+     * - array ['method', [ arguments ...]]
+     *   will be converted to [[$object, 'method'], [ ... ]]
+     *
+     * @param  array|callable method
      * @param  object|null $object to construct callable
      * @throws LogicException if something goes wrong
      * @access protected
      */
     protected function executeMethod($method, $object = null)
     {
-        $callable  = $method[0];
-        $arguments = isset($method[1]) ? $method[1] : [];
+        // is callable
+        if (is_callable($method)) {
+            return $this->executeCallable($method);
 
-        // rebuild callable from $object
-        if (is_string($callable) &&
-            method_exists($object, $callable)
-        ) {
-            $callable = [$object, $callable];
+        // is [ method, arguments ]
+        } elseif (isset($method[0])) {
+            return $this->executeCallable(
+                $this->getObjectMethod($object, $method[0]), // callable
+                isset($method[1]) ? $method[1] : [] // arguments
+            );
         }
-
-        $this->executeCallable($callable, $arguments);
     }
 
     /**
@@ -164,23 +165,39 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     protected function executeCommonBatch($object)
     {
-        $methods = [];
-
-        // get methods from 'di.common'
-        if ($this->master->getResolver()->hasInSection('', 'common')) {
-            $methods = $this->mergeMethods(
-                $this->master->getResolver()->getInSection('', 'common')
-            );
-        }
-
-        foreach ($methods as $method) {
+        foreach ($this->getCommonMethods() as $method) {
             $tester = $method[0];
-            if (is_string($tester) && is_a($object, $tester) ||
-                call_user_func($tester, $object, $this->master)
-            ) {
-                $this->executeMethod($method[1], $object);
+            $runner = $method[1];
+            if (call_user_func_array($tester, [$object, $this->master])) {
+                $this->executeMethod($runner, $object);
             }
         }
         return $this;
+    }
+
+    /**
+     * Get common methods
+     *
+     * @return array
+     * @access protected
+     */
+    protected function getCommonMethods()/*# : array */
+    {
+        // get di.common node
+        $methods = $this->mergeMethods(
+            $this->master->getResolver()->getInSection('', 'common')
+        );
+
+        // fix tester
+        foreach ($methods as $i => $pair) {
+            if (is_string($pair[0])) {
+                $tester = $pair[0];
+                $methods[$i][0] = function($obj) use ($tester) {
+                    return is_a($obj, $tester);
+                };
+            }
+        }
+
+        return $methods;
     }
 }

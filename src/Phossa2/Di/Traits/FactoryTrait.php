@@ -235,6 +235,28 @@ trait FactoryTrait
     }
 
     /**
+     * Returns [$object, $method] if it is a callable, otherwise returns $method
+     *
+     * @param  mixed $object
+     * @param  mixed $method
+     * @return bool
+     * @access protected
+     */
+    protected function getObjectMethod($object, $method)/*# : bool */
+    {
+        if (is_string($method) && method_exists($object, $method)) {
+            return [$object, $method];
+        } elseif (is_callable($method)) {
+            return $method;
+        } else {
+            throw new LogicException(
+                Message::get(Message::DI_CALLABLE_BAD, $method),
+                Message::DI_CALLABLE_BAD
+            );
+        }
+    }
+
+    /**
      * Get object by different mapped
      *
      * @param  mixed $mapped
@@ -272,15 +294,15 @@ trait FactoryTrait
      * to
      *   `[[1], [2], [3], [4]]`
      *
-     * @param  array $nodeData
+     * @param  array|null $nodeData
      * @return array
      * @access protected
      */
-    protected function mergeMethods(array $nodeData)/*# : array */
+    protected function mergeMethods($nodeData)/*# : array */
     {
         // no merge
         if (empty($nodeData) || isset($nodeData[0])) {
-            return $nodeData;
+            return (array) $nodeData;
         }
 
         // in sections

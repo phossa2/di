@@ -72,6 +72,11 @@ class Message extends BaseMessage
      */
     const DI_CLASS_UNKNOWN = 1607061015;
 
+    /*
+     * Bad callable "%s" found
+     */
+    const DI_CALLABLE_BAD = 1607061016;
+
     /**
      * {@inheritDoc}
      */
@@ -85,5 +90,6 @@ class Message extends BaseMessage
         self::DI_CONTAINER_READONLY => 'Write to readonly container with "%s"',
         self::DI_PARAMETER_MISMATCH => 'Parameter "%s" mismatched for method "%s"',
         self::DI_CLASS_UNKNOWN => 'Unknown dependent class or interface "%s"',
+        self::DI_CALLABLE_BAD => 'Bad callable "%s" found',
     ];
 }

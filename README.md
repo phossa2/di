@@ -312,7 +312,7 @@ Features
 
     `callableOrMethodName` here can be,
 
-    - method name of the cache instance
+    - method name of the current instance
 
     - a valid callable
 
@@ -335,9 +335,12 @@ Features
             ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
 
             // tester callable and method
-            [function($object, $container) {
-                return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
-            }, ['setLogger', ['${#logger}']]],
+            [
+                function($object, $container) {
+                    return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
+                },
+                ['setLogger', ['${#logger}']]
+            ],
         ],
     ];
     ```
@@ -348,7 +351,15 @@ Features
     the container as parameters. The second part is in the same method format
     mentioned before.
 
-    'skip'
+    To skip execution of common methods for one service, define it with `skip` as
+    follows,
+
+    ```php
+    $container->set('logger', [
+        'class' => 'Phossa2\Logger\Logger',
+        'skip'  => true
+    ]);
+    ```
 
 APIs
 ---

@@ -194,4 +194,50 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
+
+    /**
+     * Test running methods for instance
+     *
+     * @cover Phossa2\Di\Container::get()
+     */
+    public function testGet4()
+    {
+        $this->expectOutputString('wow_runMethod1_driverMethod_OneCallable_WOW_');
+
+        $this->object->set('newcache', [
+            'class'   => 'MyCache',
+            'methods' => [
+                ['printf', ['wow_']], // a function
+                ['runMethod1'], // newcache's method
+                [['${#MyCacheDriver}', 'driverMethod'], []], // another service method
+                function() { echo "OneCallable_"; }, // callable
+                [function($s) { echo $s; }, [ "WOW_" ]], // callable with args
+            ]
+        ]);
+
+        // only run once !
+        $this->object->get('newcache');
+        $this->object->get('newcache');
+    }
+
+    /**
+     * Test running common methods for instance
+     *
+     * @cover Phossa2\Di\Container::get()
+     */
+    public function testGet5()
+    {
+        $this->expectOutputString('DriverInterface');
+
+        // set up common methods
+        $this->object->param(
+            'di.common', [
+                ['DriverInterface', function() { echo "DriverInterface"; }],
+            ]
+        );
+
+        // only run once !
+        $this->object->get('MyCache');
+        $this->object->get('MyCache');
+    }
 }
