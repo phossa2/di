@@ -14,8 +14,6 @@
 
 namespace Phossa2\Di\Traits;
 
-use Phossa2\Config\Traits\WritableTrait;
-
 /**
  * ArrayAccessTrait
  *
@@ -29,8 +27,6 @@ use Phossa2\Config\Traits\WritableTrait;
  */
 trait ArrayAccessTrait
 {
-    use WritableTrait;
-
     public function offsetExists($offset)/*# : bool */
     {
         return $this->has($offset);

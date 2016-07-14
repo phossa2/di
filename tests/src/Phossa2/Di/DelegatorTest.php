@@ -84,4 +84,31 @@ class DelegatorTest extends \PHPUnit_Framework_TestCase
         // but same here
         $this->assertTrue($this->object->get('cache')->getDriver() === $container1->get('driver'));
     }
+
+    /**
+     * Test delegator writable
+     *
+     * @cover Phossa2\Di\Delegator::isWritable()
+     * @cover Phossa2\Di\Delegator::setWritable()
+     * @expectedException Phossa2\Di\Exception\RuntimeException
+     * @expectedExceptionCode Phossa2\Di\Message\Message::DI_CONTAINER_READONLY
+     */
+    public function testSetWritable()
+    {
+        $container1 = new Container();
+        $this->object->addContainer($container1);
+
+        $container2 = new Container();
+        $this->object->addContainer($container2);
+
+        // default is writable
+        $this->assertTrue($this->object->isWritable());
+
+        // disable write
+        $this->object->setWritable(false);
+
+        $this->assertFalse($this->object->isWritable());
+
+        $this->object->set('driver', new \MyCacheDriver());
+    }
 }

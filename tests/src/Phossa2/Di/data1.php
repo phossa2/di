@@ -41,3 +41,35 @@ class YourCache
 
     // ...
 }
+
+class A {
+    private $b, $c;
+
+    public function __construct(B $b, C $c) {
+        $this->b = $b;
+        $this->c = $c;
+    }
+
+    public function getB() {
+        return $this->b;
+    }
+
+    public function getC() {
+        return $this->c;
+    }
+}
+
+class B {
+    private $c;
+    public function __construct(C $c) {
+        $this->c = $c;
+    }
+
+    public function getC() {
+        return $this->c;
+    }
+}
+
+class C {
+}
+

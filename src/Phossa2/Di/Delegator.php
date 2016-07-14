@@ -23,6 +23,7 @@ use Phossa2\Di\Exception\NotFoundException;
 use Phossa2\Shared\Reference\DelegatorTrait;
 use Phossa2\Di\Interfaces\DelegatorInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
+use Phossa2\Config\Traits\DelegatorWritableTrait;
 
 /**
  * Delegator
@@ -41,7 +42,7 @@ use Phossa2\Config\Interfaces\WritableInterface;
  */
 class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAccess
 {
-    use DelegatorTrait, ArrayAccessTrait;
+    use DelegatorTrait, ArrayAccessTrait, DelegatorWritableTrait;
 
     /**
      * {@inheritDoc}
@@ -88,23 +89,6 @@ class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAcce
     public function addContainer(ContainerInterface $container)
     {
         return $this->addRegistry($container);
-    }
-
-    /**
-     * Override 'isWritable()' in 'Phossa2\Config\Traits\WritableTrait'
-     * {@inheritDoc}
-     */
-    public function isWritable()/*# : bool */
-    {
-        foreach ($this->lookup_pool as $reg) {
-            if ($reg instanceof WritableInterface &&
-                $reg->isWritable()
-            ) {
-                $this->setWritable($reg);
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

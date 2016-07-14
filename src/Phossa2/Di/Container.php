@@ -21,6 +21,7 @@ use Phossa2\Di\Resolver\Resolver;
 use Phossa2\Di\Traits\ContainerTrait;
 use Phossa2\Di\Traits\ArrayAccessTrait;
 use Phossa2\Shared\Base\ObjectAbstract;
+use Phossa2\Config\Traits\WritableTrait;
 use Interop\Container\ContainerInterface;
 use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\RuntimeException;
@@ -86,7 +87,7 @@ use Phossa2\Shared\Reference\DelegatorAwareInterface;
  */
 class Container extends ObjectAbstract implements ContainerInterface, ResolverAwareInterface, FactoryAwareInterface, ScopeInterface, ExtendedContainerInterface, DelegatorAwareInterface, \ArrayAccess, WritableInterface
 {
-    use ContainerTrait, ArrayAccessTrait, DelegatorAwareTrait;
+    use ContainerTrait, ArrayAccessTrait, DelegatorAwareTrait, WritableTrait;
 
     /**
      * Inject a Phossa2\Config\Config
@@ -283,6 +284,19 @@ class Container extends ObjectAbstract implements ContainerInterface, ResolverAw
     public function isWritable()/*# : bool */
     {
         return $this->getResolver()->isWritable();
+    }
+
+    /**
+     * Override 'setWritable()' in 'Phossa2\Config\Traits\WritableTrait'
+     *
+     * Container's writability is depend on its resolver
+     *
+     * {@inheritDoc}
+     */
+    public function setWritable($writable)/*# : bool */
+    {
+        $this->getResolver()->setWritable((bool) $writable);
+        return $this;
     }
 
     /**

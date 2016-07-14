@@ -31,6 +31,8 @@ use Phossa2\Shared\Reference\DelegatorAwareInterface;
  * - ObjectResolver can be injected into a config delegator, so it implements the
  *   `DelegatorAwareInterface`
  *
+ * - ObjectResolver is READONLY
+ *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     ConfigInterface

@@ -467,6 +467,130 @@ Features
 
   - Define your own scope
 
+    You may get an instance in your own scope as follows,
+
+    ```php
+    // instance in scope 'myScope'
+    $cacheOfMyScope = $container->get('cache@myScope');
+
+    // instance in single scope, even though you specified one
+    $cacheOfSingle = $container->one('cache@myScope');
+
+    // instance in shared scope
+    $cache = $container->get('cache');
+    ```
+
+    Service references can also have scope defined as follows,
+
+    ```php
+    $container->set('cache', [
+        'class' => 'Phossa2\\Cache\\Cache',
+        'args'  => ['${#driver@myScope}'] // use driver of myScope
+    ]);
+    ```
+
+  - Share instance only in certain object
+
+    Sometimes, user may want to share one instance only under certain object.
+
+    ```php
+    class A {
+        private $b, $c;
+
+        public function __construct(B $b, C $c) {
+            $this->b = $b;
+            $this->c = $c;
+        }
+
+        public function getB() {
+            return $this->b;
+        }
+
+        public function getC() {
+            return $this->c;
+        }
+    }
+
+    class B {
+        private $c;
+        public function __construct(C $c) {
+            $this->c = $c;
+        }
+    }
+
+    class C {
+    }
+
+    // an instance of A
+    $a1 = $container->one('A');
+
+    // another instance of A
+    $a2 = $container->one('A');
+
+    // $a1 and $a2 is different
+    var_dump($a1 === $a2); // false
+
+    // C is the same under A
+    var_dump($a1->getC() === $a1->getB()->getC()); // true
+
+    // C is also shared among different A
+    var_dump($a1->getC() === $a2->getC()); // true
+    ```
+
+    In previous code, `C` is not only shared under the `A`, but also shared among
+    different instances of `A`. What if user want to share `C` only under the `A`
+    but not between `A` ?
+
+    By setting scope of `C` to '#A' as follows,
+
+    ```php
+    $container->set('C', [ 'class' => 'C', 'scope' => '#A']);
+
+    // an instance of A
+    $a1 = $container->one('A');
+
+    // another instance of A
+    $a2 = $container->one('A');
+
+    // C is different among different A
+    var_dump($a1->getC() !== $a2->getC()); // true
+
+    // C is same under one A
+    var_dump($a1->getC() === $a1->getB()->getC()); // true
+    ```
+
+- <a name="array"></a>**Array access and read only**
+
+  Both `Phossa2\Di\Container` and `Phossa2\Di\Delegator` implements `\ArrayAccess`
+  interface.
+
+  ```php
+  $container = new Container();
+  $delegator = new Delegator();
+
+  $delegator->addContainer($container);
+
+  // equals to $delegator->has('A')
+  if (isset($delegator['A'])) {
+      var_dump($delegator['A'] === $container['A']); // true
+  }
+  ```
+
+  By default `Phossa2\Di\Container` is writable which means user can add new service
+  definitions to the container. To get a readonly container,
+
+  ```php
+  $container = new Container();
+  $container->setWritable(false);
+
+  var_dump($container->isWritable()); // false
+
+  // delegator also
+  $delegator = new Delegator();
+  $delegator->setWritable(false);
+
+  var_dump($delegator->isWritable()); // false
+  ```
 
 APIs
 ---

@@ -247,4 +247,62 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
         // only run once !
         $this->object->get('MyCache');
     }
+
+    /**
+     * Test get in shared scope
+     *
+     * @cover Phossa2\Di\Container::get()
+     */
+    public function testGet6()
+    {
+        $a1 = $this->object->get('A');
+        $a2 = $this->object->get('A');
+        $a3 = $this->object->one('A');
+        $a4 = $this->object->get('A@scope');
+
+        $this->assertTrue($a1 === $a2);
+        $this->assertTrue($a1 !== $a3);
+        $this->assertTrue($a1 !== $a4);
+
+        // same C for different A
+        $this->assertTrue($a1->getC() === $a3->getC());
+    }
+
+    /**
+     * Test shared in service scope
+     *
+     * @cover Phossa2\Di\Container::get()
+     */
+    public function testGet7()
+    {
+        // define C shared under A
+        $this->object->set('C', ['class' => 'C', 'scope' => '#A']);
+
+        $a1 = $this->object->one('A');
+        $a2 = $this->object->one('A');
+
+        // different As
+        $this->assertTrue($a1 !== $a2);
+
+        // different C for different A
+        $this->assertTrue($a1->getC() !== $a2->getC());
+
+        // same C for same A
+        $this->assertTrue($a1->getC() === $a1->getB()->getC());
+    }
+
+    /**
+     * Test array access
+     *
+     * @cover Phossa2\Di\Container::get()
+     */
+    public function testGet8()
+    {
+        $container = new Container();
+        $delegator = new Delegator();
+        $delegator->addContainer($container);
+
+        $this->assertTrue(isset($container['A']));
+        $this->assertTrue($delegator['A'] === $container['A']);
+    }
 }
