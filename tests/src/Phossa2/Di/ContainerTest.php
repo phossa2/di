@@ -202,16 +202,16 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGet4()
     {
-        $this->expectOutputString('wow_runMethod1_driverMethod_OneCallable_WOW_');
+        $this->expectOutputString('a_runMethod1_driverMethod_b_c_');
 
         $this->object->set('newcache', [
             'class'   => 'MyCache',
             'methods' => [
-                ['printf', ['wow_']], // a function
+                ['printf', ['a_']], // a function
                 ['runMethod1'], // newcache's method
                 [['${#MyCacheDriver}', 'driverMethod'], []], // another service method
-                function() { echo "OneCallable_"; }, // callable
-                [function($s) { echo $s; }, [ "WOW_" ]], // callable with args
+                function() { echo "b_"; }, // callable
+                [function($s) { echo $s; }, [ "c_" ]], // callable with args
             ]
         ]);
 
@@ -227,17 +227,24 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGet5()
     {
-        $this->expectOutputString('DriverInterface');
+        $this->expectOutputString('a_b_c_c_');
 
         // set up common methods
         $this->object->param(
             'di.common', [
-                ['DriverInterface', function() { echo "DriverInterface"; }],
+                ['DriverInterface', function() { echo "a_"; }],
+                [
+                    function($obj, $container) { return $obj instanceof \DriverInterface; },
+                    function() { echo "b_"; }
+                ],
+                [
+                    function($obj, $container) { return true; },
+                    function() { echo "c_"; }
+                ],
             ]
         );
 
         // only run once !
-        $this->object->get('MyCache');
         $this->object->get('MyCache');
     }
 }

@@ -21,7 +21,7 @@ use Interop\Container\ContainerInterface;
 use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
 use Phossa2\Shared\Reference\DelegatorTrait;
-use Phossa2\Shared\Reference\DelegatorInterface;
+use Phossa2\Di\Interfaces\DelegatorInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
 
 /**
@@ -39,7 +39,7 @@ use Phossa2\Config\Interfaces\WritableInterface;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class Delegator extends ObjectAbstract implements ContainerInterface, DelegatorInterface, \ArrayAccess, WritableInterface
+class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAccess
 {
     use DelegatorTrait, ArrayAccessTrait;
 
@@ -80,6 +80,14 @@ class Delegator extends ObjectAbstract implements ContainerInterface, DelegatorI
                 Message::DI_CONTAINER_READONLY
             );
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function addContainer(ContainerInterface $container)
+    {
+        return $this->addRegistry($container);
     }
 
     /**

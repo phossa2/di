@@ -96,7 +96,7 @@ interface ExtendedContainerInterface
      * Set up a parameter, later can be used as ${parameter}
      *
      * @param  string $name
-     * @param  mixed $to
+     * @param  mixed $value
      * @return $this
      * @access public
      * @api

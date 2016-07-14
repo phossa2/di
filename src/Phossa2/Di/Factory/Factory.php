@@ -167,10 +167,11 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     protected function executeCommonBatch($object)
     {
-        foreach ($this->getCommonMethods() as $method) {
+        $methods = $this->getCommonMethods();
+        foreach ($methods as $method) {
             $tester = $method[0];
             $runner = $method[1];
-            if (call_user_func_array($tester, [$object, $this->master])) {
+            if ($tester($object, $this->master)) {
                 $this->executeMethod($runner, $object);
             }
         }

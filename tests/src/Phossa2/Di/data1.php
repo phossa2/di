@@ -9,7 +9,10 @@ class MyCache
         $this->driver = $driver;
     }
 
-    // ...
+    public function getDriver() {
+        return $this->driver;
+    }
+
     public function runMethod1() {
         echo "runMethod1_";
     }

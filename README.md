@@ -103,7 +103,7 @@ Usage
   // create the container
   $container = new Container();
 
-  // add service with id 'cache'
+  // define service with an array
   $container->set('cache', [
       'class' => 'MyCache', // classname
       'args'  => ['${#driver}'] // constructor arguments
@@ -250,13 +250,13 @@ Features
   );
 
   // map an interface to a service id reference
-  $container->map('Phossa\\Cache\\CachePoolInterface', '${#cache}');
+  $container->map('Phossa2\\Cache\\CachePoolInterface', '${#cache}');
 
   // map an interface to a parameter reference
-  $container->map('Phossa\\Cache\\CachePoolInterface', '${cache.class}');
+  $container->map('Phossa2\\Cache\\CachePoolInterface', '${cache.class}');
 
   // map an interface to a callback
-  $container->map('Phossa\\Cache\\CachePoolInterface', function() {
+  $container->map('Phossa2\\Cache\\CachePoolInterface', function() {
       return new \Phossa2\Cache\CachePool();
   });
   ```
@@ -357,6 +357,116 @@ Features
         'skip'  => true
     ]);
     ```
+
+- <a name="delegate"></a>**Container delegation**
+
+  According to [Interop Container Delegate Lookup](https://github.com/container-interop/fig-standards/blob/master/proposed/container.md),
+  container may register a delegate container (the delegator), and
+
+  - Calls to the `get()` method should only return an entry if the entry is
+    part of the container. If the entry is not part of the container, an
+    exception should be thrown (as requested by the `ContainerInterface`).
+
+  - Calls to the `has()` method should only return true if the entry is part
+    of the container. If the entry is not part of the container, false should
+    be returned.
+
+  - If the fetched entry has dependencies, **instead** of performing the
+    dependency lookup in the container, the lookup is performed on the
+    delegate container (delegator).
+
+  - **Important** By default, the lookup *SHOULD* be performed on the delegate
+    container only, not on the container itself.
+
+  This library fully supports the delegate feature.
+
+  ```php
+  use Phossa2\Di\Delegator;
+
+  // create delegator
+  $delegator = new Delegator();
+
+  // create container
+  $container = new Container();
+
+  // insert container into delegator
+  $delegator->addContainer($container);
+
+  // get from delegator now
+  $cache = $delegator->get('cache');
+  ```
+
+- <a name="scope"></a>**Object scope**
+
+  - Shared or single scope
+
+    By default, service instances in the container is shared inside the container,
+    actually they have the scope of `Container::SCOPE_SHARED`. If users want
+    different instance each time, they may either use the method `one()` or define
+    the service with `Container::SCOPE_SINGLE` scope.
+
+    ```php
+    // cache service by default is in shared scope
+    $cache1 = $container->get('cache');
+
+    // get again
+    $cache2 = $container->get('cache');
+
+    // same
+    var_dump($cache1 === $cache2); // true
+
+    // a new cache instance with 'one()'
+    $cache3 = $container->one('cache');
+
+    // different instances
+    var_dump($cache1 === $cache3); // false
+
+    // but both share the same cacheDriver dependent service
+    var_dump($cache1->getDriver() === $cache3->getDriver()); // true
+    ```
+
+    Or define the service as `Container::SCOPE_SINGLE`
+
+    ```php
+    $container->set('cache', [
+        'class' => '\\Phossa2\\Cache\\CachePool'),
+        'scope' => Container::SCOPE_SINGLE
+    ]);
+
+    // each get() will return a new cache
+    $cache1 = $container->get('cache');
+    $cache2 = $container->get('cache');
+
+    // different instances
+    var_dump($cache1 === $cache2); // false
+
+    // dependent service are shared
+    var_dump($cache1->getDriver() === $cache->getDriver()); // true
+    ```
+
+    Set the container's default scope to `Container::SCOPE_SINGLE` will cause each
+    `get()` returns a new instance (unless 'scope' is explicitly defined as shared
+    for this service).
+
+    ```php
+    // set default scope to SCOPE_SINGLE
+    $container->share(false);
+
+    // a new copy of cache service
+    $cache1 = $container->get('cache');
+
+    // another new cache service
+    $cache2 = $container->get('cache');
+
+    // different instances
+    var_dump($cache1 === $cache2); // false
+
+    // dependencies are different
+    var_dump($cache1->getDriver() === $cache->getDriver()); // false
+    ```
+
+  - Define your own scope
+
 
 APIs
 ---
