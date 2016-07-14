@@ -127,12 +127,15 @@ trait ScopeTrait
         list($rawId, $scope) = $this->splitId($id);
 
         // use the default scope if no scope given
-        $scope = empty($scope) ? $this->default_scope : $scope;
+        if (empty($scope)) {
+            // use the default
+            $scope = $this->default_scope;
 
-        // honor predefined scope
-        $def = $this->getResolver()->getService($rawId);
-        if (is_array($def) && isset($def['scope'])) {
-            $scope = $def['scope'];
+            // honor predefined scope over the default
+            $def = $this->getResolver()->getService($rawId);
+            if (is_array($def) && isset($def['scope'])) {
+                $scope = $def['scope'];
+            }
         }
 
         return [$rawId, $scope];

@@ -45,9 +45,9 @@ or add the following lines to your `composer.json`
 Usage
 ---
 
-- With *autowiring* of classes.
+- With [*autowiring*](#auto) of classes.
 
-  A couple of predefined simple classes as follows,
+  A couple of simple classes as follows,
 
   ```php
   // file cache.php
@@ -69,7 +69,8 @@ Usage
   }
   ```
 
-  Get the `MyCache` instance automatically using the DI container,
+  Instead of creating `MyCacheDriver` and `MyCache` instances manually, you may get
+  the both instances automatically using the DI container,
 
   ```php
   use Phossa2\Di\Container;
@@ -88,7 +89,8 @@ Usage
 
   With [autowiring](#auto) is turned on by default, the container will look for the
   `MyCache` class if no service defined as 'MyCache', and resolves its dependency
-  injection automatically when creating the `MyCache` instance.
+  injection (here, is the `MyCacheDriver` instance) automatically when creating the
+  `MyCache` instance.
 
 - With manual service addition using `set()`
 
@@ -102,6 +104,9 @@ Usage
 
   // create the container
   $container = new Container();
+
+  // turn off autowiring
+  $container->auto(false);
 
   // define service with an array
   $container->set('cache', [
@@ -119,13 +124,13 @@ Usage
   ```
 
   A service reference `'${#driver}'` used in the constructor arguments here
-  indicating it is the `driver` service (object).
+  indicating it is the `driver` service instance from the container.
 
-- With configuration from files or data array
+- With configuration from files or array
 
-  Container may use a `Phossa2\Config\Config` instance as its definitions for
-  services. The `Phossa2\Config\Config` instance may either read configs from files
-  or get configs from a data array as follows,
+  Container may use a `Phossa2\Config\Config` instance as its definition resolver
+  for both parameters and services. The `Phossa2\Config\Config` instance may either
+  read configs from files or get configs from an array as follows,
 
   ```php
   use Phossa2\Di\Container;
@@ -144,7 +149,7 @@ Usage
           'driver' => 'MyCacheDriver',
       ],
 
-      // interface/classname mappings
+      // interface to classname mappings
       'di.mapping' => [
       ],
 
@@ -161,7 +166,7 @@ Usage
   // create $config instance with provided data
   $config = new Config(null, null, $configData);
 
-  // instantiate container with $config instance with base node is 'di'
+  // instantiate container with $config instance and definition base node 'di'
   $container = new Container($config, 'di');
 
   // get service by id 'cache' (di.service.cache)
@@ -172,7 +177,7 @@ Usage
   ```
 
   By default, container related configurations are under the node `di` and service
-  definitions are under the `di.service` node of the `$config` instance.
+  definitions are under the `di.service` node.
 
 Features
 ---
@@ -189,10 +194,10 @@ Features
     container method `param()` as follows,
 
     ```php
-    // define a new parameter
+    // define a new parameter for the container
     $container->param('cache.dir', '${system.tmpdir}/cache');
 
-    // use the cache.dir parameter in service definition
+    // use the cache.dir parameter defined above
     $container->set('cache', [
         'class' => '${cache.class}', // predefined in file
         'args'  => ['${cache.dir}']  // just defined before
@@ -202,7 +207,7 @@ Features
   - Service references
 
     Service reference in the format of '${#service_id}' can be used to referring
-    a service in the container (or in the [delegator](#delegate)).
+    a service instance in the container (or in the [delegator](#delegate)).
 
     ```php
     $container->set('cache', [
@@ -211,14 +216,14 @@ Features
     ]);
     ```
 
-    Two *reserved* service references are '${#container}' and '${#config}'. These
+    **Two reserved service references are '${#container}' and '${#config}'**. These
     two are refering the container instance itself and the config instance it is
     using. These two can be used just like other service references.
 
   - Using references
 
     References can be used anywhere in the configs or as the arguments for all
-    container methods(except for the paramter `$id` of the method).
+    container methods (except for the paramter `$id` of the methods).
 
     ```php
     // run(callable, arguments) with references
@@ -274,7 +279,7 @@ Features
   ];
   ```
 
-  Autowiring can be turned on/off. Turn off autowiring will enable user to check
+  Autowiring can be turned on/off. Turning off autowiring will enable user to check
   any defintion errors without automatic loading.
 
   ```php
@@ -345,8 +350,8 @@ Features
     Common methods can be configured in the 'di.common' node to apply to all the
     instances right after their instantiation. The definition consists of two parts,
     the first is an interface/classname or a callable takes current instance and
-    the container as parameters. The second part is in the same method format
-    as in the service definition 'methods'.
+    the container as parameters and returns a boolean value. The second part is in
+    the same method format as in the service definition 'methods'.
 
     To skip execution of common methods for one service, define it with `skip` as
     follows,
@@ -400,8 +405,8 @@ Features
 
   - Shared or single scope
 
-    By default, service instances in the container is shared inside the container,
-    actually they have the scope of `Container::SCOPE_SHARED`. If users want
+    By default, service instances in the container are shared inside the container.
+    Actually they have the scope of `Container::SCOPE_SHARED`. If users want
     different instance each time, they may either use the method `one()` or define
     the service with `Container::SCOPE_SINGLE` scope.
 
@@ -419,7 +424,7 @@ Features
     $cache3 = $container->one('cache');
 
     // different instances
-    var_dump($cache1 === $cache3); // false
+    var_dump($cache1 !== $cache3); // true
 
     // but both share the same cacheDriver dependent service
     var_dump($cache1->getDriver() === $cache3->getDriver()); // true
@@ -438,7 +443,7 @@ Features
     $cache2 = $container->get('cache');
 
     // different instances
-    var_dump($cache1 === $cache2); // false
+    var_dump($cache1 !== $cache2); // true
 
     // dependent service are shared
     var_dump($cache1->getDriver() === $cache->getDriver()); // true
@@ -459,21 +464,22 @@ Features
     $cache2 = $container->get('cache');
 
     // different instances
-    var_dump($cache1 === $cache2); // false
+    var_dump($cache1 !== $cache2); // true
 
     // dependencies are different
     var_dump($cache1->getDriver() === $cache->getDriver()); // false
     ```
 
-  - Define your own scope
+  - Use your own scope
 
-    You may get an instance in your own scope as follows,
+    You may get an instance in your own scope as follows no matter whatever the
+    default scope or the defined scope for this instance,
 
     ```php
     // instance in scope 'myScope'
     $cacheOfMyScope = $container->get('cache@myScope');
 
-    // instance in single scope, even though you specified one
+    // new instance in single scope, even though you specified one
     $cacheOfSingle = $container->one('cache@myScope');
 
     // instance in shared scope
@@ -489,9 +495,12 @@ Features
     ]);
     ```
 
+    **NOTE**: Service id with scope appended has the highest priority as of scope
+    over defined scope for this service, and over default scope of the container.
+
   - Share instance only in certain object
 
-    Sometimes, user may want to share one instance only under certain object.
+    Sometimes, user may want to share one instance only inside certain object.
 
     ```php
     class A {
@@ -528,7 +537,7 @@ Features
     $a2 = $container->one('A');
 
     // $a1 and $a2 is different
-    var_dump($a1 === $a2); // false
+    var_dump($a1 !== $a2); // true
 
     // C is the same under A
     var_dump($a1->getC() === $a1->getB()->getC()); // true
@@ -544,6 +553,7 @@ Features
     By setting scope of `C` to '#A' as follows,
 
     ```php
+    // this scope only takes effect when under service A
     $container->set('C', [ 'class' => 'C', 'scope' => '#A']);
 
     // an instance of A
@@ -577,7 +587,9 @@ Features
   ```
 
   By default `Phossa2\Di\Container` is writable which means user can add new service
-  definitions to the container. To get a readonly container,
+  definitions to the container manually by using `set()`.
+
+  To get a readonly container,
 
   ```php
   $container = new Container();
