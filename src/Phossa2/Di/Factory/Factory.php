@@ -15,8 +15,10 @@
 namespace Phossa2\Di\Factory;
 
 use Phossa2\Di\Container;
+use Phossa2\Di\Message\Message;
 use Phossa2\Di\Traits\FactoryTrait;
 use Phossa2\Shared\Base\ObjectAbstract;
+use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Interfaces\FactoryInterface;
 
 /**
@@ -199,5 +201,55 @@ class Factory extends ObjectAbstract implements FactoryInterface
         }
 
         return $methods;
+    }
+
+    /**
+     * Merge different sections of a node
+     *
+     * convert
+     *   `['section1' => [[1], [2]], 'section2' => [[3], [4]]]`
+     *
+     * to
+     *   `[[1], [2], [3], [4]]`
+     *
+     * @param  array|null $nodeData
+     * @return array
+     * @access protected
+     */
+    protected function mergeMethods($nodeData)/*# : array */
+    {
+        // no merge
+        if (empty($nodeData) || isset($nodeData[0])) {
+            return (array) $nodeData;
+        }
+
+        // in sections
+        $result = [];
+        foreach ($nodeData as $data) {
+            $result = array_merge($result, $data);
+        }
+        return $result;
+    }
+
+    /**
+     * Returns [$object, $method] if it is a callable, otherwise returns $method
+     *
+     * @param  mixed $object
+     * @param  mixed $method
+     * @return bool
+     * @access protected
+     */
+    protected function getObjectMethod($object, $method)/*# : bool */
+    {
+        if (is_string($method) && method_exists($object, $method)) {
+            return [$object, $method];
+        } elseif (is_callable($method)) {
+            return $method;
+        } else {
+            throw new LogicException(
+                Message::get(Message::DI_CALLABLE_BAD, $method),
+                Message::DI_CALLABLE_BAD
+            );
+        }
     }
 }

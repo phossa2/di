@@ -184,15 +184,15 @@ Features
 
   - Parameter references
 
-    See [reference](https://github.com/phossa2/config#ref) for detail. Parameter
-    references are read from configuration files or can be defined by `param()` as
-    follows,
+    See [phossa2/config reference](https://github.com/phossa2/config#ref) for detail.
+    Parameter references are read from configuration files or can be defined by
+    container method `param()` as follows,
 
     ```php
     // define a new parameter
     $container->param('cache.dir', '${system.tmpdir}/cache');
 
-    // use the cache.dir parameter
+    // use the cache.dir parameter in service definition
     $container->set('cache', [
         'class' => '${cache.class}', // predefined in file
         'args'  => ['${cache.dir}']  // just defined before
@@ -221,12 +221,12 @@ Features
     container methods(except for the paramter `$id` of the method).
 
     ```php
-    // log a warning message
+    // run(callable, arguments) with references
     $container->run(['${#logger}', 'warning'], ['warning from ${log.facility}']);
 
     // resolve references
     $data = ['${system.dir}', '${#logger}'];
-    $container->resolve($data); // all references in $data are resolved now
+    $container->resolve($data); // all references in $data are now resolved
     ```
 
 - <a name="auto"></a>**Autowiring and mapping**
@@ -312,12 +312,12 @@ Features
 
     `callableOrMethodName` here can be,
 
-    - method name of the current instance
+    - method name of the service instance
 
     - a valid callable
 
-    - a psedudo callable with references. After resolving the references, it is a
-      valid callable.
+    - a psedudo callable with references (after resolving the references, it is a
+      valid callable).
 
     `OptionalArgumentArray` here can be,
 
@@ -331,16 +331,13 @@ Features
     $configData = [
         // common methods for all instances
         'di.common' => [
-            // interface name and method
+            // [interface name, method]
             ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
 
-            // tester callable and method
-            [
-                function($object, $container) {
-                    return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
-                },
-                ['setLogger', ['${#logger}']]
-            ],
+            // [callable, method]
+            [function($object, $container) {
+                return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
+             }, ['setLogger', ['${#logger}']]],
         ],
     ];
     ```
@@ -349,7 +346,7 @@ Features
     instances right after their instantiation. The definition consists of two parts,
     the first is an interface/classname or a callable takes current instance and
     the container as parameters. The second part is in the same method format
-    mentioned before.
+    as in the service definition 'methods'.
 
     To skip execution of common methods for one service, define it with `skip` as
     follows,
