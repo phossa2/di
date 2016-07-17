@@ -133,4 +133,23 @@ trait InstanceFactoryTrait
             return $obj;
         }
     }
+
+    /**
+     * execute init methods defined in 'di.init' node
+     *
+     * @return $this
+     * @throws RuntimeException if anything goes wrong
+     * @access protected
+     */
+    protected function initContainer()
+    {
+        $initNode = $this->getResolver()->getSectionId('', 'init');
+
+        if ($this->getResolver()->has($initNode)) {
+            $this->getFactory()->executeMethodBatch(
+                $this->getResolver()->get($initNode)
+            );
+        }
+        return $this;
+    }
 }

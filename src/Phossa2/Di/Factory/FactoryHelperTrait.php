@@ -14,7 +14,10 @@
 
 namespace Phossa2\Di\Factory;
 
+use Phossa2\Di\Message\Message;
+use Phossa2\Di\Resolver\ObjectResolver;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Traits\ResolverAwareTrait;
 
 /**
  * FactoryHelperTrait
@@ -28,6 +31,35 @@ use Phossa2\Di\Exception\LogicException;
  */
 trait FactoryHelperTrait
 {
+    use ResolverAwareTrait;
+
+    /**
+     * Get service definition
+     *
+     * @param  string $rawId
+     * @param  array $args
+     * @return array
+     * @access protected
+     */
+    protected function getDefinition(
+        /*# string */ $rawId,
+        array $args
+    )/*# : array */ {
+        // get the definition
+        $def = $this->getResolver()->getService($rawId);
+
+        // fix class
+        if (!is_array($def) || !isset($def['class'])) {
+            $def = ['class' => $def];
+        }
+
+        // add arguments
+        if (!empty($args)) {
+            $def['args'] = $args;
+        }
+
+        return (array) $def;
+    }
 
     /**
      * Instantiate service object from classname
@@ -164,5 +196,91 @@ trait FactoryHelperTrait
         return is_object($var) &&
             !$var instanceof \Closure &&
             method_exists($var, '__invoke');
+    }
+
+    /**
+     * Get an object base on provided classname or interface name
+     *
+     * @param  string $classname class or interface name
+     * @return object
+     * @throws \Exception if something goes wrong
+     * @access protected
+     */
+    protected function getObjectByClass(/*# string */ $classname)
+    {
+        if ($this->getResolver()->hasService($classname)) {
+            $serviceId = ObjectResolver::getServiceId($classname);
+            return $this->getResolver()->get($serviceId);
+        }
+        throw new LogicException(
+            Message::get(Message::DI_CLASS_UNKNOWN, $classname),
+            Message::DI_CLASS_UNKNOWN
+        );
+    }
+
+    /**
+     * Returns [$object, $method] if it is a callable, otherwise returns $method
+     *
+     * @param  mixed $object
+     * @param  mixed $method
+     * @return bool
+     * @access protected
+     */
+    protected function getObjectMethod($object, $method)/*# : bool */
+    {
+        if (is_string($method) && method_exists($object, $method)) {
+            return [$object, $method];
+        } elseif (is_callable($method)) {
+            return $method;
+        } else {
+            throw new LogicException(
+                Message::get(Message::DI_CALLABLE_BAD, $method),
+                Message::DI_CALLABLE_BAD
+            );
+        }
+    }
+
+    /**
+     * Merge different sections of a node
+     *
+     * convert
+     *   `['section1' => [[1], [2]], 'section2' => [[3], [4]]]`
+     *
+     * to
+     *   `[[1], [2], [3], [4]]`
+     *
+     * @param  array|null $nodeData
+     * @return array
+     * @access protected
+     */
+    protected function mergeMethods($nodeData)/*# : array */
+    {
+        // no merge
+        if (empty($nodeData) || isset($nodeData[0])) {
+            return (array) $nodeData;
+        }
+
+        // in sections
+        $result = [];
+        foreach ($nodeData as $data) {
+            $result = array_merge($result, $data);
+        }
+        return $result;
+    }
+
+    /**
+     * Get common methods
+     *
+     * @return array
+     * @access protected
+     */
+    protected function getCommonMethods()/*# : array */
+    {
+        // di.common node
+        $commNode = $this->getResolver()->getSectionId('', 'common');
+
+        return $this->mergeMethods(
+            $this->getResolver()->get($commNode)
+        );
     }
 }

@@ -25,7 +25,7 @@ use Interop\Container\ContainerInterface;
 use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Di\Traits\ExtendedContainerTrait;
+use Phossa2\Di\Traits\InstanceFactoryTrait;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
 use Phossa2\Shared\Delegator\DelegatorAwareTrait;
@@ -86,7 +86,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     use WritableTrait,
         ArrayAccessTrait,
         DelegatorAwareTrait,
-        ExtendedContainerTrait;
+        InstanceFactoryTrait;
 
     /**
      * Inject a Phossa2\Config\Config
@@ -188,6 +188,68 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
         );
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function run($callable, array $arguments = [])
+    {
+        $this->resolve($callable);
+        $this->resolve($arguments);
+
+        return $this->getFactory()->executeCallable($callable, $arguments);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function param(/*# string */ $name, $value)
+    {
+        $this->getResolver()->set((string) $name, $value);
+        return $this;
+    }
+
+    // AutoWiringInterface related
+
+    /**
+     * {@inheritDoc}
+     */
+    public function auto(/*# bool */ $flag = true)
+    {
+        $this->getResolver()->auto($flag);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isAuto()/*# : bool */
+    {
+        return $this->getResolver()->isAuto();
+    }
+
+    // ReferenceResolveInterface related
+
+    /**
+     * {@inheritDoc}
+     */
+    public function resolve(&$toResolve)
+    {
+        $this->getResolver()->resolve($toResolve);
+        return $this;
+    }
+
+    // ScopeInterface related
+
+    /**
+     * @inheritDoc
+     */
+    public function share(/*# bool */ $shared = true)
+    {
+        $this->default_scope = (bool) $shared ? self::SCOPE_SHARED :
+            self::SCOPE_SINGLE;
+        return $this;
+    }
+
     // WritableInterface related
 
     /**
@@ -233,24 +295,5 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     public function setWritable($writable)/*# : bool */
     {
         return $this->getResolver()->setWritable((bool) $writable);
-    }
-
-    /**
-     * execute init methods defined in 'di.init' node
-     *
-     * @return $this
-     * @throws RuntimeException if anything goes wrong
-     * @access protected
-     */
-    protected function initContainer()
-    {
-        $initNode = $this->getResolver()->getSectionId('', 'init');
-
-        if ($this->getResolver()->has($initNode)) {
-            $this->getFactory()->executeMethodBatch(
-                $this->getResolver()->get($initNode)
-            );
-        }
-        return $this;
     }
 }

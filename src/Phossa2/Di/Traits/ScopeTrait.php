@@ -40,16 +40,6 @@ trait ScopeTrait
     protected $default_scope = ScopeInterface::SCOPE_SHARED;
 
     /**
-     * @inheritDoc
-     */
-    public function share(/*# bool */ $shared = true)
-    {
-        $this->default_scope = (bool) $shared ?
-            ScopeInterface::SCOPE_SHARED : ScopeInterface::SCOPE_SINGLE;
-        return $this;
-    }
-
-    /**
      * Split 'service_id@scope' into ['service_id', 'scope']
      *
      * if no scope found, use ''
