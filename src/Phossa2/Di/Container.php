@@ -18,7 +18,6 @@ use Phossa2\Config\Config;
 use Phossa2\Di\Message\Message;
 use Phossa2\Di\Factory\Factory;
 use Phossa2\Di\Resolver\Resolver;
-use Phossa2\Di\Traits\ScopeTrait;
 use Phossa2\Di\Traits\ArrayAccessTrait;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Config\Traits\WritableTrait;
@@ -26,8 +25,6 @@ use Interop\Container\ContainerInterface;
 use Phossa2\Di\Interfaces\ScopeInterface;
 use Phossa2\Di\Exception\RuntimeException;
 use Phossa2\Di\Exception\NotFoundException;
-use Phossa2\Di\Traits\ContainerHelperTrait;
-use Phossa2\Di\Traits\InstanceFactoryTrait;
 use Phossa2\Di\Traits\ExtendedContainerTrait;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Interfaces\WritableInterface;
@@ -59,7 +56,7 @@ use Phossa2\Shared\Delegator\DelegatorAwareInterface;
  * - delegator-aware: lookup dependent instances in the delegator
  *
  *   ```php
- *   $delegator->addRegistry($container);
+ *   $delegator->addContainer($container);
  *   ```
  *
  * - extended container
@@ -86,12 +83,9 @@ use Phossa2\Shared\Delegator\DelegatorAwareInterface;
  */
 class Container extends ObjectAbstract implements ContainerInterface, ScopeInterface, WritableInterface, \ArrayAccess, DelegatorAwareInterface, ExtendedContainerInterface
 {
-    use ScopeTrait,
-        WritableTrait,
+    use WritableTrait,
         ArrayAccessTrait,
         DelegatorAwareTrait,
-        ContainerHelperTrait,
-        InstanceFactoryTrait,
         ExtendedContainerTrait;
 
     /**
@@ -180,6 +174,18 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
             );
         }
         return false;
+    }
+
+    // ExtendedContainerInterface
+
+    /**
+     * {@inheritDoc}
+     */
+    public function one(/*# string */ $id, array $arguments = [])
+    {
+        return $this->get(
+            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE), $arguments
+        );
     }
 
     // WritableInterface related

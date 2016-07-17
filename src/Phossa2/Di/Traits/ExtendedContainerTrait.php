@@ -14,9 +14,6 @@
 
 namespace Phossa2\Di\Traits;
 
-use Phossa2\Di\Interfaces\ScopeInterface;
-use Phossa2\Di\Interfaces\FactoryInterface;
-use Phossa2\Di\Interfaces\ResolverInterface;
 use Phossa2\Di\Interfaces\ExtendedContainerInterface;
 
 /**
@@ -32,17 +29,11 @@ use Phossa2\Di\Interfaces\ExtendedContainerInterface;
  */
 trait ExtendedContainerTrait
 {
+    use InstanceFactoryTrait;
+
     // ExtendedContainerInterface related
 
-    /**
-     * {@inheritDoc}
-     */
-    public function one(/*# string */ $id, array $arguments = [])
-    {
-        return $this->get(
-            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE), $arguments
-        );
-    }
+    abstract public function one(/*# string */ $id, array $arguments = []);
 
     /**
      * {@inheritDoc}
@@ -93,38 +84,4 @@ trait ExtendedContainerTrait
         $this->getResolver()->resolve($toResolve);
         return $this;
     }
-
-    /**
-     * From ContainerInterface
-     *
-     * @param string $id Identifier of the entry to look for.
-     * @return mixed Entry.
-     */
-    abstract public function get($id);
-
-    /**
-     * From ContainerHelperTrait
-     *
-     * @return ResolverInterface
-     */
-    abstract protected function getResolver()/*# : ResolverInterface */;
-
-    /**
-     * From ContainerHelperTrait
-     *
-     * @return FactoryInterface
-     */
-    abstract protected function getFactory()/*# : FactoryInterface */;
-
-    /**
-     * From ScopeTrait
-     *
-     * @param  string $id
-     * @param  string $scope
-     * @return string
-     */
-    abstract protected function scopedId(
-        /*# string */ $id,
-        /*# string */ $scope
-    )/*# : string */;
 }

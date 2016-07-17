@@ -147,7 +147,8 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
                 'args'  => $args
             ];
         }
-        return $this->set($this->getSectionId($id), $definition);
+        $this->set($this->getSectionId($id), $definition);
+        return $this;
     }
 
     /**

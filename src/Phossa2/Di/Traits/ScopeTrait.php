@@ -29,6 +29,8 @@ use Phossa2\Di\Interfaces\ScopeInterface;
  */
 trait ScopeTrait
 {
+    use ContainerHelperTrait;
+
     /**
      * default scope for objects
      *
@@ -148,11 +150,4 @@ trait ScopeTrait
         }
         return $data;
     }
-
-    /**
-     * From ContainerHelperTrait
-     *
-     * @return ResolverInterface
-     */
-    abstract protected function getResolver()/*# : ResolverInterface */;
 }

@@ -15,6 +15,7 @@
 namespace Phossa2\Di\Factory;
 
 use Phossa2\Di\Message\Message;
+use Phossa2\Di\Resolver\ObjectResolver;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Traits\ResolverAwareTrait;
@@ -217,5 +218,53 @@ class Factory extends ObjectAbstract implements FactoryInterface
                 Message::DI_CALLABLE_BAD
             );
         }
+    }
+
+    /**
+     * Get service definition
+     *
+     * @param  string $rawId
+     * @param  array $args
+     * @return array
+     * @access protected
+     */
+    protected function getDefinition(
+        /*# string */ $rawId,
+        array $args
+    )/*# : array */ {
+        // get the definition
+        $def = $this->getResolver()->getService($rawId);
+
+        // fix class
+        if (!is_array($def) || !isset($def['class'])) {
+            $def = ['class' => $def];
+        }
+
+        // add arguments
+        if (!empty($args)) {
+            $def['args'] = $args;
+        }
+
+        return (array) $def;
+    }
+
+    /**
+     * Get an object base on provided classname or interface name
+     *
+     * @param  string $classname class or interface name
+     * @return object
+     * @throws \Exception if something goes wrong
+     * @access protected
+     */
+    protected function getObjectByClass(/*# string */ $classname)
+    {
+        if ($this->getResolver()->hasService($classname)) {
+            $serviceId = ObjectResolver::getServiceId($classname);
+            return $this->getResolver()->get($serviceId);
+        }
+        throw new LogicException(
+            Message::get(Message::DI_CLASS_UNKNOWN, $classname),
+            Message::DI_CLASS_UNKNOWN
+            );
     }
 }

@@ -31,6 +31,8 @@ use Phossa2\Di\Interfaces\ScopeInterface;
  */
 trait InstanceFactoryTrait
 {
+    use ScopeTrait;
+
     /**
      * instances pool
      *
