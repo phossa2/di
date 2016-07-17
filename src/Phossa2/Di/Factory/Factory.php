@@ -146,8 +146,25 @@ class Factory extends ObjectAbstract implements FactoryInterface
 
         // execute common methods for all objects
         if (!isset($definition['skip']) || !$definition['skip']) {
-            $methods = $this->getCommonMethods();
-            $this->executeMethodBatch($methods, $object);
+            $this->executeCommonBatch($object);
+        }
+    }
+
+    /**
+     * Execute common methods for all objects
+     *
+     * @param  object $object
+     * @access protected
+     */
+    protected function executeCommonBatch($object)
+    {
+        $commons = $this->getCommonMethods();
+        foreach ($commons as $pair) {
+            $tester = $pair[0];
+            $runner = $pair[1];
+            if ($tester($object, $this)) {
+                $this->executeMethod($runner, $object);
+            }
         }
     }
 }

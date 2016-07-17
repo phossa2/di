@@ -6,9 +6,9 @@
 [![Latest Stable Version](https://img.shields.io/packagist/vpre/phossa2/di.svg?style=flat)](https://packagist.org/packages/phossa2/di)
 [![License](https://poser.pugx.org/phossa2/di/license)](http://mit-license.org/)
 
-**phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop] implementation
-of dependency injection library for PHP. It builds upon the versatile
-[phossa2/config][config] library and supports [autowiring](#auto),
+**phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop]
+implementation of dependency injection library for PHP. It builds upon the
+versatile [phossa2/config][config] library and supports [autowiring](#auto),
 [container delegation](#delegate), [object decorating](#decorate),
 [object scope](#scope) and more.
 
@@ -69,8 +69,8 @@ Usage
   }
   ```
 
-  Instead of creating `MyCacheDriver` and `MyCache` instances manually, you may get
-  the both instances automatically using the DI container,
+  Instead of creating `MyCacheDriver` and `MyCache` instances manually, you may
+  get the both instances automatically using the DI container,
 
   ```php
   use Phossa2\Di\Container;
@@ -87,10 +87,10 @@ Usage
   }
   ```
 
-  With [autowiring](#auto) is turned on by default, the container will look for the
-  `MyCache` class if no service defined as 'MyCache', and resolves its dependency
-  injection (here, is the `MyCacheDriver` instance) automatically when creating the
-  `MyCache` instance.
+  With [autowiring](#auto) is turned on by default, the container will look for
+  the `MyCache` class if no service defined as 'MyCache', and resolves its
+  dependency injection (here, is the `MyCacheDriver` instance) automatically
+  when creating the `MyCache` instance.
 
 - With manual service addition using `set()`
 
@@ -128,9 +128,10 @@ Usage
 
 - With configuration from files or array
 
-  Container may use a `Phossa2\Config\Config` instance as its definition resolver
-  for both parameters and services. The `Phossa2\Config\Config` instance may either
-  read configs from files or get configs from an array as follows,
+  Container may use a `Phossa2\Config\Config` instance as its definition
+  resolver for both parameters and services. The `Phossa2\Config\Config`
+  instance may either read configs from files or get configs from an array as
+  follows,
 
   ```php
   use Phossa2\Di\Container;
@@ -176,8 +177,8 @@ Usage
   var_dump($cache instanceof \MyCache);
   ```
 
-  By default, container related configurations are under the node `di` and service
-  definitions are under the `di.service` node.
+  By default, container related configurations are under the node `di` and
+  service definitions are under the `di.service` node.
 
 Features
 ---
@@ -189,9 +190,9 @@ Features
 
   - Parameter references
 
-    See [phossa2/config reference](https://github.com/phossa2/config#ref) for detail.
-    Parameter references are read from configuration files or can be defined by
-    container method `param()` as follows,
+    See [phossa2/config reference](https://github.com/phossa2/config#ref) for
+    detail. Parameter references are read from configuration files or can be
+    defined by container method `param()` as follows,
 
     ```php
     // define a new parameter for the container
@@ -216,9 +217,9 @@ Features
     ]);
     ```
 
-    **Two reserved service references are '${#container}' and '${#config}'**. These
-    two are refering the container instance itself and the config instance it is
-    using. These two can be used just like other service references.
+    **Two reserved service references are '${#container}' and '${#config}'**.
+    These two are refering the container instance itself and the config instance
+    it is using. These two can be used just like other service references.
 
   - Using references
 
@@ -236,16 +237,16 @@ Features
 
 - <a name="auto"></a>**Autowiring and mapping**
 
-  *Autowiring* is the ability of container instantiating objects and resolving its
-  dependencies automatically by their classname or interface name. The base for
-  autowiring is the PHP function parameter *type-hinting*.
+  *Autowiring* is the ability of container instantiating objects and resolving
+  its dependencies automatically by their classname or interface name. The base
+  for autowiring is the PHP function parameter *type-hinting*.
 
   By reflecting on class, constructor and methods, *phossa2/di* is able to find
   the right class for the instance (user need to use the classname as the service
   id) and right classes for its dependencies (type-hinted with the classnames).
 
-  If interface name is used for dependency type-hint, users may set up the mapping
-  of interfaces to the right classnames as follows,
+  If interface name is used for dependency type-hint, users may set up the
+  mapping of interfaces to the right classnames as follows,
 
   ```php
   // map an interface to a classname
@@ -279,8 +280,8 @@ Features
   ];
   ```
 
-  Autowiring can be turned on/off. Turning off autowiring will enable user to check
-  any defintion errors without automatic loading.
+  Autowiring can be turned on/off. Turning off autowiring will enable user to
+  check any defintion errors without automatic loading.
 
   ```php
   // turn off auto wiring
@@ -311,9 +312,9 @@ Features
     ]);
     ```
 
-    By adding `methods` section into the `cache` service definition in the format of
-    `[ callableOrMethodName, OptionalArgumentArray ]`, these methods will be executed
-    right after `cache` instantiation.
+    By adding `methods` section into the `cache` service definition in the
+    format of `[ callableOrMethodName, OptionalArgumentArray ]`, these methods
+    will be executed right after `cache` instantiation.
 
     `callableOrMethodName` here can be,
 
@@ -321,8 +322,8 @@ Features
 
     - a valid callable
 
-    - a psedudo callable with references (after resolving the references, it is a
-      valid callable).
+    - a psedudo callable with references (after resolving the references, it is
+      a valid callable).
 
     `OptionalArgumentArray` here can be,
 
@@ -336,10 +337,7 @@ Features
     $configData = [
         // common methods for all instances
         'di.common' => [
-            // [interface name, method]
-            ['Psr\\Log\\LoggerAwareInterface', ['setLogger', ['${#logger}']]],
-
-            // [callable, method]
+            // [ tester(): bool, method ]
             [function($object, $container) {
                 return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
              }, ['setLogger', ['${#logger}']]],
@@ -348,13 +346,13 @@ Features
     ```
 
     Common methods can be configured in the 'di.common' node to apply to all the
-    instances right after their instantiation. The definition consists of two parts,
-    the first is an interface/classname or a callable takes current instance and
-    the container as parameters and returns a boolean value. The second part is in
+    instances right after their instantiation. The definition consists of two
+    parts, the first is a tester callable takes current instance and the
+    container as parameters and returns a boolean value. The second part is in
     the same method format as in the service definition 'methods'.
 
-    To skip execution of common methods for one service, define it with `skip` as
-    follows,
+    To skip execution of common methods for one service, define it with `skip`
+    as follows,
 
     ```php
     $container->set('logger', [
@@ -405,10 +403,10 @@ Features
 
   - Shared or single scope
 
-    By default, service instances in the container are shared inside the container.
-    Actually they have the scope of `Container::SCOPE_SHARED`. If users want
-    different instance each time, they may either use the method `one()` or define
-    the service with `Container::SCOPE_SINGLE` scope.
+    By default, service instances in the container are shared inside the
+    container. Actually they have the scope of `Container::SCOPE_SHARED`. If
+    users want different instance each time, they may either use the method
+    `one()` or define the service with `Container::SCOPE_SINGLE` scope.
 
     ```php
     // cache service by default is in shared scope
@@ -449,9 +447,9 @@ Features
     var_dump($cache1->getDriver() === $cache->getDriver()); // true
     ```
 
-    Set the container's default scope to `Container::SCOPE_SINGLE` will cause each
-    `get()` returns a new instance (unless 'scope' is explicitly defined as shared
-    for this service).
+    Set the container's default scope to `Container::SCOPE_SINGLE` will cause
+    each `get()` returns a new instance (unless 'scope' is explicitly defined
+    as shared for this service).
 
     ```php
     // set default scope to SCOPE_SINGLE
@@ -495,8 +493,9 @@ Features
     ]);
     ```
 
-    **NOTE**: Service id with scope appended has the highest priority as of scope
-    over defined scope for this service, and over default scope of the container.
+    **NOTE**: Service id with scope appended has the highest priority as of
+    scope over defined scope for this service, and over default scope of the
+    container.
 
   - Share instance only in certain object
 
@@ -546,9 +545,9 @@ Features
     var_dump($a1->getC() === $a2->getC()); // true
     ```
 
-    In previous code, `C` is not only shared under the `A`, but also shared among
-    different instances of `A`. What if user want to share `C` only under the `A`
-    but not between `A` ?
+    In previous code, `C` is not only shared under the `A`, but also shared
+    among different instances of `A`. What if user want to share `C` only under
+    the `A` but not between `A` ?
 
     By setting scope of `C` to '#A' as follows,
 
@@ -571,8 +570,8 @@ Features
 
 - <a name="array"></a>**Array access and read only**
 
-  Both `Phossa2\Di\Container` and `Phossa2\Di\Delegator` implements `\ArrayAccess`
-  interface.
+  Both `Phossa2\Di\Container` and `Phossa2\Di\Delegator` implements
+  `\ArrayAccess` interface.
 
   ```php
   $container = new Container();
@@ -586,8 +585,8 @@ Features
   }
   ```
 
-  By default `Phossa2\Di\Container` is writable which means user can add new service
-  definitions to the container manually by using `set()`.
+  By default `Phossa2\Di\Container` is writable which means user can add new
+  service definitions to the container manually by using `set()`.
 
   To get a readonly container,
 
@@ -626,8 +625,8 @@ APIs
 
     - `setReferencePattern($start, $end)`
 
-      Reset the reference start chars and ending chars. The default are `'${'` and
-      `'}'`
+      Reset the reference start chars and ending chars. The default are `'${'`
+      and `'}'`
 
     - `hasReference($string): bool`
 
@@ -635,20 +634,22 @@ APIs
 
     - `deReference($string): mixed`
 
-      Dereference all the references in the `$string`. The result might be `string`,
-      `array` or even `object`.
+      Dereference all the references in the `$string`. The result might be
+      `string`, `array` or even `object`.
 
     - `deReferenceArray(&$data)`
 
-      Recursively dereference everything in the `$data`. `$data` might be `string`
-      or `array`. Other input will be untouched.
+      Recursively dereference everything in the `$data`. `$data` might be
+      `string` or `array`. Other input will be untouched.
 
 Dependencies
 ---
 
 - PHP >= 5.4.0
 
-- phossa2/shared >= 2.0.9
+- phossa2/config >= 2.0.11
+
+- phossa2/shared >= 2.0.19
 
 License
 ---

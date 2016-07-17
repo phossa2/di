@@ -214,11 +214,19 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGet5()
     {
-        $this->expectOutputString('');
+        $this->expectOutputString('a_b_b_');
 
         // set up common methods
         $this->object->param(
             'di.common', [
+                [
+                    function($obj) { return $obj instanceof \MyCacheDriver; },
+                    function() { echo 'a_'; }
+                ],
+                [
+                    function($obj) { return true; },
+                    function() { echo 'b_'; }
+                ],
             ]
         );
 
