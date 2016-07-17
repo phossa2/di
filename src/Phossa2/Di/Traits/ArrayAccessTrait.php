@@ -47,7 +47,7 @@ trait ArrayAccessTrait
         $this->offsetSet($offset, null);
     }
 
-    // from ContainerInterface
+    // ContainerInterface related
 
     /**
      * @return bool
@@ -58,7 +58,7 @@ trait ArrayAccessTrait
      */
     abstract public function get(/*# string */ $id);
 
-    // from Phossa2\Config\Interfaces\WritableInterface
+    // WritableInterface related
     /**
      * @return $this
      */

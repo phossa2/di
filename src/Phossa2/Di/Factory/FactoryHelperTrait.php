@@ -12,15 +12,14 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Traits;
+namespace Phossa2\Di\Factory;
 
-use Phossa2\Di\Container;
 use Phossa2\Di\Message\Message;
 use Phossa2\Di\Resolver\ObjectResolver;
 use Phossa2\Di\Exception\LogicException;
 
 /**
- * FactoryTrait
+ * FactoryHelperTrait
  *
  * Create service instance here
  *
@@ -29,16 +28,10 @@ use Phossa2\Di\Exception\LogicException;
  * @version 2.0.0
  * @since   2.0.0 added
  */
-trait FactoryTrait
+trait FactoryHelperTrait
 {
     /**
-     * @var    Container
-     * @access protected
-     */
-    protected $master;
-
-    /**
-     * Get service definition (and fix it)
+     * Get service definition
      *
      * @param  string $rawId
      * @param  array $args
@@ -50,16 +43,15 @@ trait FactoryTrait
         array $args
     )/*# : array */ {
         // get the definition
-        $def = $this->master->getResolver()->getService($rawId);
+        $def = $this->getResolver()->getService($rawId);
 
         // fix class
         if (!is_array($def) || !isset($def['class'])) {
             $def = ['class' => $def];
         }
 
-        // add resolved arguments
+        // add arguments
         if (!empty($args)) {
-            $this->master->resolve($args);
             $def['args'] = $args;
         }
 
@@ -86,10 +78,7 @@ trait FactoryTrait
 
         // normal class with constructor
         } else {
-            $args = $this->matchArguments(
-                $constructor->getParameters(),
-                $args
-            );
+            $args = $this->matchArguments($constructor->getParameters(), $args);
             $obj = $reflector->newInstanceArgs($args);
         }
 
@@ -174,16 +163,9 @@ trait FactoryTrait
      */
     protected function getObjectByClass(/*# string */ $classname)
     {
-        $mapped = $classname;
-
-        // has mapping ?
-        if ($this->master->getResolver()->hasMapping($classname)) {
-            $mapped = $this->master->getResolver()->getMapping($classname);
-        }
-        $obj = $this->getObjectByType($mapped, $classname);
-
-        if (is_a($obj, $classname, false)) {
-            return $obj;
+        if ($this->getResolver()->hasService($classname)) {
+            $serviceId = ObjectResolver::getServiceId($classname);
+            return $this->getResolver()->get($serviceId);
         } else {
             throw new LogicException(
                 Message::get(Message::DI_CLASS_UNKNOWN, $classname),
@@ -232,34 +214,5 @@ trait FactoryTrait
         return is_object($var) &&
             !$var instanceof \Closure &&
             method_exists($var, '__invoke');
-    }
-
-    /**
-     * Get object by different mapped
-     *
-     * @param  mixed $mapped
-     * @param  string $classname
-     * @return object
-     * @access protected
-     */
-    protected function getObjectByType($mapped, /*# string */ $classname)
-    {
-        // matched object
-        if (is_a($mapped, $classname, false)) {
-            return $mapped;
-        }
-
-        // callable
-        if (is_callable($mapped)) {
-            $mapped = call_user_func($mapped);
-        }
-
-        // string
-        if (is_string($mapped)) {
-            $serviceId = ObjectResolver::getServiceId($mapped);
-            $mapped = $this->master->getResolver()->get($serviceId);
-        }
-
-        return $mapped;
     }
 }

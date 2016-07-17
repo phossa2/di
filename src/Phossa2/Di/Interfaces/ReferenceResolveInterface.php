@@ -15,31 +15,24 @@
 namespace Phossa2\Di\Interfaces;
 
 /**
- * AutoWiringInterface
+ * ReferenceResolvInterface
+ *
+ * resolving references
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface AutoWiringInterface
+interface ReferenceResolveInterface
 {
     /**
-     * Turn on/off autowiring (auto classname resolving)
+     * Resolve all references in the $toResolve (either an array or string)
      *
-     * @param  bool $flag true or false
+     * @param  mixed &$toResolve
      * @return $this
      * @access public
      * @api
      */
-    public function auto(/*# bool */ $flag = true);
-
-    /**
-     * Is autowiring turned on ?
-     *
-     * @return bool
-     * @access public
-     * @api
-     */
-    public function isAuto()/*# : bool */;
+    public function resolve(&$toResolve);
 }

@@ -12,46 +12,49 @@
  */
 /*# declare(strict_types=1); */
 
-namespace Phossa2\Di\Interfaces;
+namespace Phossa2\Di\Traits;
 
-use Phossa2\Di\Exception\NotFoundException;
+use Phossa2\Di\Interfaces\FactoryInterface;
 
 /**
- * FactoryAwareInterface
+ * ContainerHelperTrait
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface FactoryAwareInterface
+trait ContainerHelperTrait
 {
+    use ResolverAwareTrait;
+
+    /**
+     * @var    FactoryInterface
+     * @access protected
+     */
+    protected $factory;
+
     /**
      * Inject the Factory
      *
      * @param  FactoryInterface $factory
      * @return $this
-     * @access public
-     * @api
+     * @access protected
      */
-    public function setFactory(FactoryInterface $factory);
+    protected function setFactory(FactoryInterface $factory)
+    {
+        $this->factory = $factory;
+        return $this;
+    }
 
     /**
      * Get the Factory
      *
      * @return FactoryInterface
-     * @access public
-     * @throws NotFoundException if factory not found
-     * @api
+     * @access protected
      */
-    public function getFactory()/*# : FactoryInterface */;
-
-    /**
-     * Has the Factory ?
-     *
-     * @return bool
-     * @access public
-     * @api
-     */
-    public function hasFactory()/*# : bool */;
+    protected function getFactory()/*# : FactoryInterface */
+    {
+        return $this->factory;
+    }
 }

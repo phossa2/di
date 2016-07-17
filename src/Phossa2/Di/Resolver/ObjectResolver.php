@@ -14,36 +14,37 @@
 
 namespace Phossa2\Di\Resolver;
 
+use Phossa2\Di\Container;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Traits\ContainerAwareTrait;
 use Phossa2\Config\Interfaces\ConfigInterface;
-use Phossa2\Shared\Reference\DelegatorAwareTrait;
 use Phossa2\Di\Interfaces\ContainerAwareInterface;
-use Phossa2\Shared\Reference\DelegatorAwareInterface;
+use Phossa2\Shared\Delegator\DelegatorAwareInterface;
 
 /**
  * ObjectResolver
  *
- * - ObjectResolver is a readonly `ConfigInterface` wrapping around a container
- *   (it implements `ContainerAwareInterface`) for resolving '#service_id' type of
- *   objects
- *
- * - ObjectResolver can be injected into a config delegator, so it implements the
- *   `DelegatorAwareInterface`
- *
- * - ObjectResolver is READONLY
+ * A config wrapper of container for service instance lookup
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     ConfigInterface
- * @see     DelegatorAwareInterface
  * @see     ContainerAwareInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class ObjectResolver extends ObjectAbstract implements ConfigInterface, DelegatorAwareInterface, ContainerAwareInterface
+class ObjectResolver extends ObjectAbstract implements ConfigInterface, ContainerAwareInterface
 {
-    use DelegatorAwareTrait, ContainerAwareTrait;
+    use ContainerAwareTrait;
+
+    /**
+     * @param  Container $container
+     * @access public
+     */
+    public function __construct(Container $container)
+    {
+        $this->setContainer($container);
+    }
 
     /**
      * Get '#service_id' from the container
@@ -53,7 +54,7 @@ class ObjectResolver extends ObjectAbstract implements ConfigInterface, Delegato
     public function get(/*# string */ $id, $default = null)
     {
         if ($this->has($id)) {
-            return $this->getContainer()->get(static::getRawId($id));
+            return $this->getRealContainer()->get(static::getRawId($id));
         } else {
             return $default;
         }
@@ -67,9 +68,29 @@ class ObjectResolver extends ObjectAbstract implements ConfigInterface, Delegato
     public function has(/*# string */ $id)/*# : bool */
     {
         if (static::isServiceId($id)) {
-            return $this->getContainer()->has(static::getRawId($id));
+            return $this->getRealContainer()->has(static::getRawId($id));
         }
         return false;
+    }
+
+    /**
+     * Get container or its delegator
+     *
+     * @return ContainerInterface
+     * @access protected
+     */
+    protected function getRealContainer()/*# : ContainerInterface */
+    {
+        $cont = $this->getContainer();
+
+        // get delegator recursively
+        if ($cont instanceof DelegatorAwareInterface &&
+            $cont->hasDelegator()
+        ) {
+            $cont = $cont->getDelegator(true);
+        }
+
+        return $cont;
     }
 
     /**

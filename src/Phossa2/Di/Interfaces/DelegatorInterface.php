@@ -15,12 +15,12 @@
 namespace Phossa2\Di\Interfaces;
 
 use Interop\Container\ContainerInterface;
-use Phossa2\Shared\Reference\DelegatorInterface as GenericDelegatorInterface;
+use Phossa2\Shared\Delegator\DelegatorInterface as GenericDelegatorInterface;
 
 /**
  * DelegatorInterface
  *
- * For container library
+ * Container related delegator stuff
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>

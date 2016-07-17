@@ -92,14 +92,6 @@ class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAcce
     /**
      * {@inheritDoc}
      */
-    protected function isValidRegistry($registry)/*# : bool */
-    {
-        return $registry instanceof ContainerInterface;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     protected function hasInRegistry(
         $registry,
         /*# string */ $key

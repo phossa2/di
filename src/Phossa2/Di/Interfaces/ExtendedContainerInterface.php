@@ -20,19 +20,19 @@ use Phossa2\Di\Exception\RuntimeException;
 /**
  * ExtendedContainerInterface
  *
- * Extended funtionalities for a container
+ * Extended funtionalities for a ContainerInface
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
+ * @see     AutoWiringInterface
+ * @see     ReferenceResolveInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-interface ExtendedContainerInterface
+interface ExtendedContainerInterface extends AutoWiringInterface, ReferenceResolveInterface
 {
     /**
-     * Get a NEW service instance IF scope is NOT explicitly defined
-     *
-     * Explicitly defined means: ['class' => ..., 'scope' => '__SHARED__']
+     * Get a NEW service instance
      *
      * ```php
      * // get a new cache instance using shared cache driver
@@ -40,7 +40,7 @@ interface ExtendedContainerInterface
      * ```
      *
      * @param  string $id service id
-     * @param  array $arguments (optional) new arguments for the constructor
+     * @param  array $arguments (optional) arguments for the constructor
      * @return object
      * @throws LogicException if anything goes wrong
      * @access public
@@ -62,7 +62,7 @@ interface ExtendedContainerInterface
      * @param  callable|array $callable
      * @param  array $arguments (optional) arguments
      * @return mixed
-     * @throws LogicException if container goes wrong
+     * @throws LogicException if container resolving goes wrong
      * @throws RuntimeException if execution goes wrong
      * @access public
      * @api
@@ -70,30 +70,7 @@ interface ExtendedContainerInterface
     public function run($callable, array $arguments = []);
 
     /**
-     * Map an interface or classname to something else.
-     *
-     * e.g. to another classname, reference or callback etc.
-     *
-     * @param  string $from
-     * @param  mixed $to
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function map(/*# string */ $from, $to);
-
-    /**
-     * On or off autowiring
-     *
-     * @param  bool $on turn on or turn off
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function auto(/*# bool */ $on = true);
-
-    /**
-     * Set up a parameter, later can be used as ${parameter}
+     * Set up a parameter, later can be used as reference ${parameter}
      *
      * @param  string $name
      * @param  mixed $value
@@ -102,14 +79,4 @@ interface ExtendedContainerInterface
      * @api
      */
     public function param(/*# string */ $name, $value);
-
-    /**
-     * Resolve all references in the $toResolve (either an array or string)
-     *
-     * @param  mixed &$toResolve
-     * @return $this
-     * @access public
-     * @api
-     */
-    public function resolve(&$toResolve);
 }

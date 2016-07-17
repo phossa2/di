@@ -40,7 +40,7 @@ interface FactoryInterface
     public function createInstance(/*# string */ $rawId, array $arguments);
 
     /**
-     * Execute a callable with arguments
+     * Execute a callable with arguments (resolved already)
      *
      * @param  callable|array|object $callable callable
      * @param  array $arguments

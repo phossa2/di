@@ -51,13 +51,4 @@ interface ScopeInterface
      * @api
      */
     public function share(/*# bool */ $shared = true);
-
-    /**
-     * Get current default scope
-     *
-     * @return string
-     * @access public
-     * @api
-     */
-    public function getDefaultScope()/*# : string */;
 }

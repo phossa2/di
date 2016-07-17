@@ -28,4 +28,8 @@ use Phossa2\Di\Traits\ScopeTrait;
  */
 class Scope implements ScopeInterface {
     use ScopeTrait;
+
+    protected function getResolver()/*# : ResolverInterface */
+    {
+    }
 }

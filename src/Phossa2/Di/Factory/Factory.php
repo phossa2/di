@@ -14,12 +14,12 @@
 
 namespace Phossa2\Di\Factory;
 
-use Phossa2\Di\Container;
 use Phossa2\Di\Message\Message;
-use Phossa2\Di\Traits\FactoryTrait;
 use Phossa2\Shared\Base\ObjectAbstract;
 use Phossa2\Di\Exception\LogicException;
+use Phossa2\Di\Traits\ResolverAwareTrait;
 use Phossa2\Di\Interfaces\FactoryInterface;
+use Phossa2\Di\Interfaces\ResolverInterface;
 
 /**
  * Factory
@@ -34,15 +34,15 @@ use Phossa2\Di\Interfaces\FactoryInterface;
  */
 class Factory extends ObjectAbstract implements FactoryInterface
 {
-    use FactoryTrait;
+    use ResolverAwareTrait, FactoryHelperTrait;
 
     /**
-     * @param  Container $container
+     * @param  ResolverInterface
      * @access public
      */
-    public function __construct(Container $container)
+    public function __construct(ResolverInterface $resolver)
     {
-        $this->master = $container;
+        $this->setResolver($resolver);
     }
 
     /**
@@ -50,7 +50,7 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     public function createInstance(/*# string */ $rawId, array $arguments)
     {
-        // get resolved definition
+        // get service definition
         $def = $this->getDefinition($rawId, $arguments);
 
         // arguments
@@ -148,34 +148,9 @@ class Factory extends ObjectAbstract implements FactoryInterface
 
         // execute common methods for all objects
         if (!isset($definition['skip']) || !$definition['skip']) {
-            $this->executeCommonBatch($object);
+            $methods = $this->getCommonMethods();
+            $this->executeMethodBatch($methods, $object);
         }
-    }
-
-    /**
-     * Execute common methods defined in 'di.common' for all objects
-     *
-     * Methods are in the form of
-     *
-     *   [ interfaceOrClassname, [methodOrCallable, ArgumentsArray]],
-     *   [ testCallable($obj, $container), [methodOrCallable, ArgumentsArray],
-     *   ...
-     *
-     * @param  object $object
-     * @return $this
-     * @access protected
-     */
-    protected function executeCommonBatch($object)
-    {
-        $methods = $this->getCommonMethods();
-        foreach ($methods as $method) {
-            $tester = $method[0];
-            $runner = $method[1];
-            if ($tester($object, $this->master)) {
-                $this->executeMethod($runner, $object);
-            }
-        }
-        return $this;
     }
 
     /**
@@ -186,22 +161,12 @@ class Factory extends ObjectAbstract implements FactoryInterface
      */
     protected function getCommonMethods()/*# : array */
     {
-        // get di.common node
-        $methods = $this->mergeMethods(
-            $this->master->getResolver()->getInSection('', 'common')
+        // di.common node
+        $commNode = $this->getResolver()->getSectionId('', 'common');
+
+        return $this->mergeMethods(
+            $this->getResolver()->get($commNode)
         );
-
-        // fix tester
-        foreach ($methods as $i => $pair) {
-            if (is_string($pair[0])) {
-                $tester = $pair[0];
-                $methods[$i][0] = function($obj) use ($tester) {
-                    return is_a($obj, $tester);
-                };
-            }
-        }
-
-        return $methods;
     }
 
     /**

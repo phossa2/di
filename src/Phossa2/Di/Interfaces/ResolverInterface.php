@@ -27,63 +27,9 @@ namespace Phossa2\Di\Interfaces;
 interface ResolverInterface
 {
     /**
-     * Resolve all references in the $toResolve (either an array or string)
-     *
-     * @param  mixed &$toResolve
-     * @return $this
-     * @access public
-     */
-    public function resolve(&$toResolve);
-
-    /**
-     * Set the object resolver
-     *
-     * @access public
-     * @api
-     */
-    public function setObjectResolver();
-
-    /**
-     * Get the $id in section
-     *
-     * @param  string $id key/name
-     * @param  string $section section relative to the base
-     * @return mixed
-     * @access public
-     */
-    public function getInSection(/*# string */ $id, /*# string */ $section);
-
-    /**
-     * Has the $id in section
-     *
-     * @param  string $id key/name
-     * @param  string $section section relative to the base
-     * @return bool
-     * @access public
-     */
-    public function hasInSection(
-        /*# string */ $id,
-        /*# string */ $section
-    )/*# : bool */;
-
-    /**
-     * Add/overwrite in section
-     *
-     * @param  string $id key/name
-     * @param  string $section section relative to the base
-     * @param  mixed $value
-     * @return $this
-     * @throws LogicException if not writable
-     * @access public
-     */
-    public function setInSection(
-        /*# string */ $id,
-        /*# string */ $section,
-        $value
-    );
-
-    /**
      * Get the $id in 'service' section
+     *
+     * Returns all the services if $id === ''
      *
      * @param  string $id key/name
      * @return mixed
@@ -144,59 +90,15 @@ interface ResolverInterface
     );
 
     /**
-     * Get the $id in 'mapping' section
+     * Generate new id base on base node and section
      *
-     * @param  string $id key/name
-     * @return mixed string or callable etc.
+     * @param  string $id
+     * @param  string $section
+     * @return string
      * @access public
      */
-    public function getMapping(/*# string */ $id = '');
-
-    /**
-     * Has the $id in 'mapping' section
-     *
-     * @param  string $id key/name
-     * @return bool
-     * @access public
-     */
-    public function hasMapping(/*# string */ $id = '')/*# : bool */;
-
-    /**
-     * Map an interface to a classname
-     *
-     * ```php
-     * // map a interface => a classname
-     * $resolver->setMapping(
-     *     'Phossa2\\Cache\\CachePoolInterface', // NO leading backslash
-     *     'Phossa2\\Cache\\CachePool'
-     * );
-     *
-     * // map a interface => service reference
-     * $resolver->setMapping(
-     *     'Phossa2\\Cache\\CachePoolInterface',
-     *     '${#cache}'
-     * );
-     *
-     * // map a interface => a parameter reference
-     * $resolver->setMapping(
-     *     'Phossa2\\Cache\\CachePoolInterface',
-     *     '${cache.class}'
-     * );
-     *
-     * // map to a callable
-     * $resolver->setMapping(
-     *     'Phossa2\\Cache\\CachePoolInterface',
-     *     function() {
-     *         return new Phossa2\Cache\Cache();
-     *     }
-     * );
-     * ```
-     *
-     * @param  string $from interface or class name
-     * @param  $to class name/${#service_id}/${parameter} or even callback
-     * @return $this
-     * @throws LogicException if not writable
-     * @access public
-     */
-    public function setMapping(/*# string */ $from, $to);
+    public function getSectionId(
+        /*# string */ $id,
+        /*# string */ $section = 'service'
+    )/*# : string */;
 }

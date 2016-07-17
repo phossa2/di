@@ -14,19 +14,13 @@
 
 namespace Phossa2\Di\Traits;
 
-use Phossa2\Di\Message\Message;
-use Phossa2\Di\Exception\NotFoundException;
 use Phossa2\Di\Interfaces\ResolverInterface;
-use Phossa2\Di\Interfaces\ResolverAwareInterface;
 
 /**
  * ResolverAwareTrait
  *
- * Implementation of ResolverAwareInterface
- *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
- * @see     ResolverAwareInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
@@ -39,33 +33,26 @@ trait ResolverAwareTrait
     protected $resolver;
 
     /**
-     * {@inheritDoc}
+     * Get the resolver
+     *
+     * @return ResolverInterface
+     * @access protected
      */
-    public function getResolver()/*# : ResolverInterface */
+    protected function getResolver()/*# : ResolverInterface */
     {
-        if ($this->hasResolver()) {
-            return $this->resolver;
-        }
-        throw new NotFoundException(
-            Message::get(Message::DI_RESOLVER_NOTFOUND),
-            Message::DI_RESOLVER_NOTFOUND
-        );
+        return $this->resolver;
     }
 
     /**
-     * {@inheritDoc}
+     * Set the resolver
+     *
+     * @param  ResolverInterface $resolver
+     * @return $this
+     * @access protected
      */
-    public function setResolver(ResolverInterface $resolver)
+    protected function setResolver(ResolverInterface $resolver)
     {
         $this->resolver = $resolver;
         return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function hasResolver()/*# : bool */
-    {
-        return null !== $this->resolver;
     }
 }

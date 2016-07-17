@@ -21,38 +21,26 @@ use Phossa2\Di\Interfaces\AutoWiringInterface;
 use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
 use Phossa2\Shared\Reference\ReferenceInterface;
+use Phossa2\Di\Interfaces\ReferenceResolveInterface;
 
 /**
  * Resolver
  *
- * - Resolver is a config delegator with
- *
- *   - '#service_id' type of objects lookup
- *   - parameter config lookup.
- *
- * - Resolver implements ResolverInterface for easy access to different sections
- *   of the parameter config.
+ * A config delegator for resolving service or parameter references
  *
  * @package Phossa2\Di
  * @author  Hong Zhang <phossa@126.com>
  * @see     \Phossa2\Config\Delegator
  * @see     ResolverInterface
  * @see     AutoWiringInterface
+ * @see     ReferenceResolveInterface
  * @version 2.0.0
  * @since   2.0.0 added
  */
-class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringInterface
+class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringInterface, ReferenceResolveInterface
 {
     /**
-     * The outer master
-     *
-     * @var    Container
-     * @access protected
-     */
-    protected $master;
-
-    /**
-     * The object resolver
+     * The config for object resolving
      *
      * @var    ObjectResolver
      * @access protected
@@ -60,7 +48,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     protected $object_resolver;
 
     /**
-     * The parameter resolver
+     * The config for parameter resolver
      *
      * @var    ConfigInterface
      * @access protected
@@ -76,7 +64,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     protected $base_node;
 
     /**
-     * Autowiring: automatically resolve classname if it is a defined class
+     * For autowiring
      *
      * @var    bool
      * @access protected
@@ -84,32 +72,31 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     protected $auto = true;
 
     /**
-     * @param  Container $master the master
-     * @param  Config $config used for parameter resolving
+     * @param  Container $container
+     * @param  ConfigInterface $config inject config for parameter resolving
      * @param  string $nodeName
      * @access public
      */
     public function __construct(
-        Container $master,
-        Config $config,
+        Container $container,
+        ConfigInterface $config,
         /*# string */ $nodeName
     ) {
-        // set config and make it/self writable
+        // set parameter resolver
         $this->config_resolver = $config;
-
-        // set base node
         $this->base_node = $nodeName;
 
         // set object resolver
-        $this->master = $master;
-        $this->object_resolver = new ObjectResolver();
-        $this->setObjectResolver();
+        $this->object_resolver = new ObjectResolver($container);
 
-        // set up lookup pool
-        $this->addRegistry($this->object_resolver)->addRegistry($config);
+        // delegator
+        $this->addConfig($this->object_resolver);
+        $this->addConfig($this->config_resolver);
     }
 
     /**
+     * Resolving use the parameter resolver
+     *
      * {@inheritDoc}
      */
     public function resolve(&$toResolve)
@@ -123,72 +110,24 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     /**
      * {@inheritDoc}
      */
-    public function setObjectResolver()
-    {
-        // either master container or master's container delegator
-        if ($this->master->hasDelegator()) {
-            $container = $this->master->getDelegator();
-        } else {
-            $container = $this->master;
-        }
-        $this->object_resolver->setContainer($container);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getInSection(/*# string */ $id, /*# string */ $section)
-    {
-        return $this->get($this->getSectionId($id, $section));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function hasInSection(
-        /*# string */ $id,
-        /*# string */ $section
-    )/*# : bool */ {
-        return $this->has($this->getSectionId($id, $section));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setInSection(
-        /*# string */ $id,
-        /*# string */ $section,
-        $value
-    ) {
-        $this->set($this->getSectionId($id, $section), $value);
-        return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function getService(/*# string */ $id = '')
     {
-        // get from service section
-        if ($this->hasInSection($id, 'service')) {
-            return $this->getInSection($id, 'service');
-
-        // autowiring support
-        } else if ($this->autoClassName($id)) {
-            return ['class' => $id];
-
+        if ($this->hasService($id)) {
+            return $this->get($this->getSectionId($id));
         } else {
             return null;
         }
     }
 
     /**
+     * Autowiring support added
+     *
      * {@inheritDoc}
      */
     public function hasService(/*# string */ $id = '')/*# : bool */
     {
-        // with autoWiring supported
-        if ($this->hasInSection($id, 'service') || $this->autoClassName($id)) {
+        $sid = $this->getSectionId($id);
+        if ($this->has($sid) || $this->autoClassName($id)) {
             return true;
         }
         return false;
@@ -208,60 +147,43 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
                 'args'  => $args
             ];
         }
-        return $this->setInSection($id, 'service', $definition);
+        return $this->set($this->getSectionId($id), $definition);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getMapping(/*# string */ $id = '')
-    {
-        return $this->getInSection($id, 'mapping');
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function hasMapping(/*# string */ $id = '')/*# : bool */
-    {
-        return $this->hasInSection($id, 'mapping');
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setMapping(/*# string */ $from, $to)
-    {
-        return $this->setInSection($from, 'mapping', $to);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function autoWiring(/*# bool */ $on = true)
-    {
-        $this->auto = (bool) $on;
-        return $this;
-    }
-
-    /**
-     * Generate new id base on base and section
-     *
-     * @param  string $id
-     * @param  string $section
-     * @return string
-     * @access protected
-     */
-    protected function getSectionId(
+    public function getSectionId(
         /*# string */ $id,
-        /*# string */ $section
+        /*# string */ $section = 'service'
     )/*# : string */ {
         $sec = $this->base_node . '.' . $section;
         return '' == $id ? $sec : ($sec . '.' . $id);
     }
 
     /**
-     * If autowiring is on, and $id is a existing classname, return true
+     * {@inheritDoc}
+     */
+    public function auto(/*# bool */ $flag = true)
+    {
+        $this->auto = (bool) $flag;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isAuto()/*# : bool */
+    {
+        return $this->auto;
+    }
+
+    /**
+     * Returns true if
+     *
+     * 1) autowiring is true
+     * 2) $id is a existing classname
+     * 3) resolver $this is writable
      *
      * @param  string $id
      * @return bool
@@ -269,7 +191,8 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      */
     protected function autoClassName(/*# string */ $id)/*# : bool */
     {
-        if ($this->auto && class_exists($id)) {
+        if ($this->auto && class_exists($id) && $this->isWritable()) {
+            $this->setService($id, $id);
             return true;
         }
         return false;

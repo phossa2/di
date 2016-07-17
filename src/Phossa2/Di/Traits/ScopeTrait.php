@@ -29,8 +29,6 @@ use Phossa2\Di\Interfaces\ScopeInterface;
  */
 trait ScopeTrait
 {
-    use ResolverAwareTrait;
-
     /**
      * default scope for objects
      *
@@ -47,14 +45,6 @@ trait ScopeTrait
         $this->default_scope = (bool) $shared ?
             ScopeInterface::SCOPE_SHARED : ScopeInterface::SCOPE_SINGLE;
         return $this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getDefaultScope()/*# : string */
-    {
-        return $this->default_scope;
     }
 
     /**
@@ -115,7 +105,7 @@ trait ScopeTrait
     }
 
     /**
-     * Returns the raw id and the scope base on default or predefined
+     * Returns the raw id and the scope base on default or defined
      *
      * @param  string $id
      * @return array [rawId, scope]
@@ -140,4 +130,29 @@ trait ScopeTrait
 
         return [$rawId, $scope];
     }
+
+    /**
+     * Append scope to data
+     *
+     * @param  mixed $data
+     * @param  string $scope
+     * @return array
+     * @access protected
+     */
+    protected function scopedData($data, /*# string */ $scope)/*# : array */
+    {
+        if (is_array($data) && isset($data['class'])) {
+            $data['scope'] = $scope;
+        } else {
+            $data = ['class' => $data, 'scope' => $scope];
+        }
+        return $data;
+    }
+
+    /**
+     * From ContainerHelperTrait
+     *
+     * @return ResolverInterface
+     */
+    abstract protected function getResolver()/*# : ResolverInterface */;
 }

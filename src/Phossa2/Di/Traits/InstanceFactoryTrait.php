@@ -19,10 +19,18 @@ use Phossa2\Di\Resolver\ObjectResolver;
 use Phossa2\Di\Exception\LogicException;
 use Phossa2\Di\Interfaces\ScopeInterface;
 
-trait ContainerTrait
+/**
+ * InstanceFactoryTrait
+ *
+ * Manufacturing instances for container
+ *
+ * @package Phossa2\Di
+ * @author  Hong Zhang <phossa@126.com>
+ * @version 2.0.0
+ * @since   2.0.0 added
+ */
+trait InstanceFactoryTrait
 {
-    use ScopeTrait, FactoryAwareTrait;
-
     /**
      * instances pool
      *
@@ -46,23 +54,6 @@ trait ContainerTrait
     protected $counter = 0;
 
     /**
-     * execute init methods defined in 'di.init' node
-     *
-     * @return $this
-     * @throws RuntimeException if anything goes wrong
-     * @access protected
-     */
-    protected function initContainer()
-    {
-        if ($this->getResolver()->hasInSection('', 'init')) {
-            $this->getFactory()->executeMethodBatch(
-                $this->getResolver()->getInSection('', 'init')
-            );
-        }
-        return $this;
-    }
-
-    /**
      * Get the instance either from the pool or create it
      *
      * @param  string $id service id with or without the scope
@@ -77,17 +68,20 @@ trait ContainerTrait
         // get id & scope info
         list($rawId, $scopedId, $scope) = $this->realScopeInfo($id);
 
-        // get a new instance if args not empty or in single scope
-        if (!empty($args) || ScopeInterface::SCOPE_SINGLE === $scope) {
-            return $this->createInstance($rawId, $args);
+        // get from the pool
+        if (isset($this->pool[$scopedId])) {
+            return $this->pool[$scopedId];
         }
 
-        // if not in the pool, create a new instance
-        if (!isset($this->pool[$scopedId])) {
-            $this->pool[$scopedId] = $this->createInstance($rawId);
+        // create instance
+        $instance = $this->createInstance($rawId, $args);
+
+        // save in the pool
+        if (empty($args) && ScopeInterface::SCOPE_SINGLE !== $scope) {
+            $this->pool[$scopedId] = $instance;
         }
 
-        return $this->pool[$scopedId];
+        return $instance;
     }
 
     /**
@@ -120,13 +114,12 @@ trait ContainerTrait
      * @throws LogicException if instantiation goes wrong or loop detected
      * @access protected
      */
-    protected function createInstance(/*# string */ $rawId, array $args = [])
+    protected function createInstance(/*# string */ $rawId, array $args)
     {
         // conver 'service_id' to '#service_id'
         $serviceId = ObjectResolver::getServiceId($rawId);
 
         if (isset($this->loop[$serviceId])) {
-            // found self in the chain
             throw new LogicException(
                 Message::get(Message::DI_LOOP_DETECTED, $rawId),
                 Message::DI_LOOP_DETECTED

@@ -106,35 +106,22 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /**
      * Test mapping to a classname
      *
-     * @cover Phossa2\Di\Container::map()
+     * @cover Phossa2\Di\Container::set()
      */
-    public function testMap1()
+    public function testSet1()
     {
-        $this->object->map('DriverInterface', 'MyCacheDriver');
-        $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
-    }
-
-    /**
-     * Test mapping to a callback returns a classname
-     *
-     * @cover Phossa2\Di\Container::map()
-     */
-    public function testMap2()
-    {
-        $this->object->map('DriverInterface', function() {
-            return 'MyCacheDriver';
-        });
+        $this->object->set('DriverInterface', 'MyCacheDriver');
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
 
     /**
      * Test mapping to a callback returns an object
      *
-     * @cover Phossa2\Di\Container::map()
+     * @cover Phossa2\Di\Container::set()
      */
-    public function testMap3()
+    public function testSet2()
     {
-        $this->object->map('DriverInterface', function() {
+        $this->object->set('DriverInterface', function() {
             return new \MyCacheDriver();
         });
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
@@ -143,26 +130,26 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /**
      * Test mapping to an object directly
      *
-     * @cover Phossa2\Di\Container::map()
+     * @cover Phossa2\Di\Container::set()
      */
-    public function testMap4()
+    public function testSet3()
     {
-        $this->object->map('DriverInterface', new \MyCacheDriver());
+        $this->object->set('DriverInterface', new \MyCacheDriver());
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
 
     /**
      * Test mapping to service reference
      *
-     * @cover Phossa2\Di\Container::map()
+     * @cover Phossa2\Di\Container::set()
      */
-    public function testMap5()
+    public function testSet4()
     {
         // set a service
         $this->object->set('thedriver', new \MyCacheDriver());
 
         // map to a service reference
-        $this->object->map('DriverInterface', '${#thedriver}');
+        $this->object->set('DriverInterface', '${#thedriver}');
 
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
@@ -170,15 +157,15 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     /**
      * Test mapping to paramter reference
      *
-     * @cover Phossa2\Di\Container::map()
+     * @cover Phossa2\Di\Container::set()
      */
-    public function testMap6()
+    public function testSet5()
     {
         // setup a parameter
         $this->object->param('the.driver', 'MyCacheDriver');
 
         // map to a parameter reference
-        $this->object->map('DriverInterface', '${the.driver}');
+        $this->object->set('DriverInterface', '${the.driver}');
 
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
@@ -190,7 +177,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      * @expectedException Phossa2\Di\Exception\LogicException
      * @expectedExceptionCode Phossa2\Di\Message\Message::DI_CLASS_UNKNOWN
      */
-    public function testMap7()
+    public function testSet6()
     {
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
     }
@@ -227,20 +214,11 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      */
     public function testGet5()
     {
-        $this->expectOutputString('a_b_c_c_');
+        $this->expectOutputString('');
 
         // set up common methods
         $this->object->param(
             'di.common', [
-                ['DriverInterface', function() { echo "a_"; }],
-                [
-                    function($obj, $container) { return $obj instanceof \DriverInterface; },
-                    function() { echo "b_"; }
-                ],
-                [
-                    function($obj, $container) { return true; },
-                    function() { echo "c_"; }
-                ],
             ]
         );
 
