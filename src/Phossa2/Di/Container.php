@@ -246,8 +246,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     public function share(/*# bool */ $shared = true)
     {
         $this->default_scope = (bool) $shared ?
-            self::SCOPE_SHARED :
-            self::SCOPE_SINGLE;
+            self::SCOPE_SHARED : self::SCOPE_SINGLE;
         return $this;
     }
 
