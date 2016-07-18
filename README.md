@@ -6,14 +6,14 @@
 [![Latest Stable Version](https://img.shields.io/packagist/vpre/phossa2/di.svg?style=flat)](https://packagist.org/packages/phossa2/di)
 [![License](https://poser.pugx.org/phossa2/di/license)](http://mit-license.org/)
 
-**phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop]
-implementation of dependency injection library for PHP. It builds upon the
-versatile [phossa2/config][config] library and supports [autowiring](#auto),
-[container delegation](#delegate), [object decorating](#decorate),
-[object scope](#scope) and more.
+**phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop] or
+[PSR-11][PSR-11] implementation of dependency injection library for PHP. It
+builds upon the versatile [phossa2/config][config] library and supports
+[autowiring](#auto), [container delegation](#delegate),
+[object decorating](#decorate), [object scope](#scope) and more.
 
 It requires PHP 5.4, supports PHP 7.0+ and HHVM. It is compliant with
-[PSR-1][PSR-1], [PSR-2][PSR-2], [PSR-4][PSR-4], and coming [PSR-5][PSR-5],
+[PSR-1][PSR-1], [PSR-2][PSR-2], [PSR-4][PSR-4], and proposed [PSR-5][PSR-5],
 [PSR-11][PSR-11].
 
 [PSR-1]: http://www.php-fig.org/psr/psr-1/ "PSR-1: Basic Coding Standard"
@@ -123,44 +123,48 @@ Usage
   var_dump($container->get('cache') instanceof \MyCache); // true
   ```
 
-  A service reference `'${#driver}'` used in the constructor arguments here
-  indicating it is the `driver` service instance from the container.
+  A [service reference](#sref) `'${#driver}'` used in the constructor arguments
+  here indicating it is the `driver` service instance from the container.
 
 - With configuration from files or array
 
-  Container may use a `Phossa2\Config\Config` instance as its definition
-  resolver for both parameters and services. The `Phossa2\Config\Config`
-  instance may either read configs from files or get configs from an array as
-  follows,
+  Container uses a `Phossa2\Config\Interfaces\ConfigInterface` instance as its
+  definition resolver for both parameters and services. The config instance may
+  either read configs from files or get configs from an array as follows,
 
   ```php
   use Phossa2\Di\Container;
   use Phossa2\Config\Config;
 
   $configData = [
-      // container class
-      'di.class' => 'Phossa2\\Di\\Container',
-
       // container service definitions
       'di.service' => [
           // cache service
           'cache'  => ['class' => 'MyCache', 'args' => ['${#driver}']],
 
-          // cache driver service
+          // cache driver, classname directly
           'driver' => 'MyCacheDriver',
       ],
 
-      // interface to classname mappings
-      'di.mapping' => [
+      // common methods to run after instantiation
+      'di.common' => [
+          [
+            function($obj) { return $obj instanceof \MyCacheDriver; },
+            function($obj, $container) { echo "ok"; }
+          ],
       ],
 
-      // init methods to run after container created
+      // init methods after container created
       'di.init' => [
-            // different sections
-            'default' => [],
+            // default methods
+            'default' => [
+                ['setLogger', ['${#logger}']],
+                // ...
+            ],
 
             // mystuff section
-            'mystuff' => [],
+            'mystuff' => [
+            ],
       ],
   ];
 
@@ -188,7 +192,7 @@ Features
   References in the format of '${reference}' can be used to refer to predefined
   parameters from the config or services in the container.
 
-  - Parameter references
+  - <a name="pref"></a>Parameter references
 
     See [phossa2/config reference](https://github.com/phossa2/config#ref) for
     detail. Parameter references are read from configuration files or can be
@@ -201,13 +205,13 @@ Features
     // use the cache.dir parameter defined above
     $container->set('cache', [
         'class' => '${cache.class}', // predefined in file
-        'args'  => ['${cache.dir}']  // just defined before
+        'args'  => ['${cache.dir}']  // just defined above
     ]);
     ```
 
-  - Service references
+  - <a name="sref"></a>Service references
 
-    Service reference in the format of '${#service_id}' can be used to referring
+    Service reference in the form of '${#service_id}' can be used to referring
     a service instance in the container (or in the [delegator](#delegate)).
 
     ```php
@@ -238,41 +242,42 @@ Features
 - <a name="auto"></a>**Autowiring and mapping**
 
   *Autowiring* is the ability of container instantiating objects and resolving
-  its dependencies automatically by their classname or interface name. The base
-  for autowiring is the PHP function parameter *type-hinting*.
+  its dependencies automatically by their classname. The base for autowiring is
+  the PHP function parameter *type-hinting*.
 
   By reflecting on class, constructor and methods, *phossa2/di* is able to find
-  the right class for the instance (user need to use the classname as the service
-  id) and right classes for its dependencies (type-hinted with the classnames).
+  the right class for the instance (user need to use the classname as the
+  service id) and right classes for its dependencies (type-hinted with the
+  classnames).
 
   If interface name is used for dependency type-hint, users may set up the
   mapping of interfaces to the right classnames as follows,
 
   ```php
   // map an interface to a classname
-  $container->map(
+  $container->set(
       'Phossa2\\Cache\\CachePoolInterface', // MUST NO leading backslash
       'Phossa2\\Cache\\CachePool'
   );
 
   // map an interface to a service id reference
-  $container->map('Phossa2\\Cache\\CachePoolInterface', '${#cache}');
+  $container->set('Phossa2\\Cache\\CachePoolInterface', '${#cache}');
 
   // map an interface to a parameter reference
-  $container->map('Phossa2\\Cache\\CachePoolInterface', '${cache.class}');
+  $container->set('Phossa2\\Cache\\CachePoolInterface', '${cache.class}');
 
   // map an interface to a callback
-  $container->map('Phossa2\\Cache\\CachePoolInterface', function() {
+  $container->set('Phossa2\\Cache\\CachePoolInterface', function() {
       return new \Phossa2\Cache\CachePool();
   });
   ```
 
-  Or define mappings in the config node `di.mapping` as follows,
+  Or define mappings in the config node `di.service` as follows,
 
   ```php
   $configData = [
       // ...
-      'di.mapping' => [
+      'di.service' => [
           'Phossa\\Cache\\CachePoolInterface' => '${cache.class}',
           // ...
       ],
@@ -293,8 +298,8 @@ Features
 
 - <a name="decorate"></a>**Object decorating**
 
-  *Object decorating* is to apply decorating changes (run methods etc.) right
-  after the instantiation of a service instance.
+  *Object decorating* is to apply decorating changes (executing methods etc.)
+  right after the instantiation of a service instance.
 
   - Decorating methods for *individual instance* only
 
@@ -303,7 +308,7 @@ Features
         'class'   => 'Phossa2\\Cache\\Cache',
         'args'    => ['${#cachedriver}'], // constructor arguments
         'methods' => [
-            ['clearCache'], // cache method with no arguments
+            ['clearCache'], // method of $cache
             ['setLogger', ['${#logger}']], // method with arguments
             [[$logger, 'setLabel'], ['cache_label']], // callable with arguments
             [['${#driver}, 'init']], // pseduo callable
@@ -313,12 +318,12 @@ Features
     ```
 
     By adding `methods` section into the `cache` service definition in the
-    format of `[ callableOrMethodName, OptionalArgumentArray ]`, these methods
+    form of `[ callableOrMethodName, OptionalArgumentArray ]`, these methods
     will be executed right after `cache` instantiation.
 
     `callableOrMethodName` here can be,
 
-    - method name of the service instance
+    - method name of current instance
 
     - a valid callable
 
@@ -338,9 +343,13 @@ Features
         // common methods for all instances
         'di.common' => [
             // [ tester(): bool, method ]
-            [function($object, $container) {
-                return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
-             }, ['setLogger', ['${#logger}']]],
+            [
+                function($object, $container) {
+                    return $object instanceof 'Psr\\Log\\LoggerAwareInterface'
+                },
+                ['setLogger', ['${#logger}']]
+            ],
+            // ...
         ],
     ];
     ```
@@ -381,7 +390,7 @@ Features
   - **Important** By default, the lookup *SHOULD* be performed on the delegate
     container only, not on the container itself.
 
-  This library fully supports the delegate feature.
+  *phossa2/di* fully supports the delegate feature.
 
   ```php
   use Phossa2\Di\Delegator;
@@ -449,7 +458,7 @@ Features
 
     Set the container's default scope to `Container::SCOPE_SINGLE` will cause
     each `get()` returns a new instance (unless 'scope' is explicitly defined
-    as shared for this service).
+    as for this service).
 
     ```php
     // set default scope to SCOPE_SINGLE
@@ -465,12 +474,12 @@ Features
     var_dump($cache1 !== $cache2); // true
 
     // dependencies are different
-    var_dump($cache1->getDriver() === $cache->getDriver()); // false
+    var_dump($cache1->getDriver() !== $cache->getDriver()); // true
     ```
 
   - Use your own scope
 
-    You may get an instance in your own scope as follows no matter whatever the
+    You may get an instance in your own scope as follows, no matter whatever the
     default scope or the defined scope for this instance,
 
     ```php
@@ -492,10 +501,6 @@ Features
         'args'  => ['${#driver@myScope}'] // use driver of myScope
     ]);
     ```
-
-    **NOTE**: Service id with scope appended has the highest priority as of
-    scope over defined scope for this service, and over default scope of the
-    container.
 
   - Share instance only in certain object
 
@@ -588,66 +593,141 @@ Features
   By default `Phossa2\Di\Container` is writable which means user can add new
   service definitions to the container manually by using `set()`.
 
+  **Note** If container is set readonly, [auto wiring](#auto) is turned off
+  automatically.
+
   To get a readonly container,
 
   ```php
   $container = new Container();
   $container->setWritable(false);
 
-  var_dump($container->isWritable()); // false
+  var_dump($container->isWritable() === false); // true
 
   // delegator also
   $delegator = new Delegator();
   $delegator->setWritable(false);
 
-  var_dump($delegator->isWritable()); // false
+  var_dump($delegator->isWritable() === false); // true
   ```
 
 APIs
 ---
 
-- <a name="api"></a>ConfigInterface API
+- <a name="api"></a>Container related
 
+  - `get(string $id): object` from *ContainerInterface*
 
-- <a name="other"></a>Other public methods
+    If not found, `Phossa2\Di\Exception\NotFoundException` is thrown. `$id`
+    may have '@scope' appended. An array can be used as the second parameter
+    for object constructor's arguments.
 
-  - Writable related
+  - `has(string $id): bool` from *ContainerInterface*
 
-    - `setWritable(bool $writable)`
+    `$id` may have '@scope' appended.
 
-      Enable or disable the `set()` functionality.
+  - `one(string $id, array $args = []): object` from *ExtendedContainerInterface*
 
-    - `isWritable(): bool`
+    Get a new instance for this `$id`. May provide new arguments for the object
+    constructor.
 
-      Test to see if config writable.
+  - `run(mixed $callable, array $args = []): mixed` from *ExtendedContainerInterface*
 
-  - Reference related
+    Execute a callable or pseduo callable (with references) with provided
+    arguments (may contain references also)
 
-    - `setReferencePattern($start, $end)`
+  - `param(string $name, mixed $value): bool` from *ExtendedContainerInterface*
 
-      Reset the reference start chars and ending chars. The default are `'${'`
-      and `'}'`
+    Set a parameter in the container's config tree for later to be used as a
+    reference. Returns a bool value to indicate status.
 
-    - `hasReference($string): bool`
+  - `register(string $id, object $object): bool` from *ExtendedContainerInterface*
 
-      Test to see if there are references in the `$string`
+    Inject an object as `$id` into the container. Difference with `set()` method
+    is that getting this object will skip the execution of common methods.
 
-    - `deReference($string): mixed`
+    Returns `true` on success and `false` on failure.
 
-      Dereference all the references in the `$string`. The result might be
-      `string`, `array` or even `object`.
+  - `auto(bool $flag): $this` from *AutoWiringInterface*
 
-    - `deReferenceArray(&$data)`
+    Set container autowiring `ON` or `OFF`.
 
-      Recursively dereference everything in the `$data`. `$data` might be
-      `string` or `array`. Other input will be untouched.
+  - `isAuto(): bool` from *AutoWiringInterface*
+
+    Test container is auto wiring `ON` or `OFF`.
+
+  - `resolve(mixed &$data): $this` from *ReferenceResolveInterface*
+
+    Recursively resolving references in the `$data`. `$data` might be `string`
+    or `array`. Other data type will be untouched.
+
+  - `share(bool $flag = true): $this` from *ScopeInterface*
+
+    Make container default scope to `Container::SCOPE_SHARED` or
+    `Container::SCOPE_SINGLE`.
+
+  - `set(string $id, mixed $value): bool` from *WritableInterface*
+
+    Set a service with `$id` into the container. `$value` can be an array in
+    the form of array as follows,
+
+    ```php
+    $value = [
+        'class' => mixed,   // classname/object/callback etc.
+        'args'  => array,   // arguments for the constructor or callback
+        'scope' => string,  // default scope for this service
+        'skip'  => bool,    // skip common methods for the instance
+    ];
+    ```
+
+    or `$value` can be classname, object, callback etc. Returns `true` on
+    success or `false` on failure. Container has to be writable, otherwise
+    a `LogicException` will be thrown.
+
+  - `isWritable(): bool` from *WritableInterface*
+
+    Is this container writable ?
+
+  - `setWritable(bool $writable): bool` from *WritableInterface*
+
+    Set this container writable or readonly.
+
+- <a name="apid"></a>Delegator related
+
+  - `get(string $id): object` from *ContainerInterface*
+
+    Get service from the delegator. If not found,
+    `Phossa2\Di\Exception\NotFoundException` is thrown. `$id` may have '@scope'
+    appended as long as underlying container supports this feature.
+
+  - `has(string $id): bool` from *ContainerInterface*
+
+    `$id` may have '@scope' appended as long as underlying container supports
+    this feature.
+
+  - `set(string $id, mixed $value): bool` from *WritableInterface*
+
+    Set a service with `$id` into the delegator as long as the delegator is
+    writable.
+
+  - `isWritable(): bool` from *WritableInterface*
+
+    Is this delegator writable ?
+
+  - `setWritable(bool $writable): bool` from *WritableInterface*
+
+    Set this delegator writable or readonly.
+    
+  - `addContainer(ContainerInterface $container): $this` from *DelegatorInterface*
+  
+    Add a container to the delegator.
 
 Dependencies
 ---
 
 - PHP >= 5.4.0
 
-- phossa2/config >= 2.0.11
+- phossa2/config >= 2.0.12
 
 - phossa2/shared >= 2.0.19
 

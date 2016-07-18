@@ -68,11 +68,10 @@ class Delegator extends ObjectAbstract implements DelegatorInterface, \ArrayAcce
     /**
      * {@inheritDoc}
      */
-    public function set(/*# string */ $id, $value)
+    public function set(/*# string */ $id, $value)/*# : bool */
     {
         if ($this->isWritable()) {
-            $this->writable->set($id, $value);
-            return $this;
+            return $this->writable->set($id, $value);
         } else {
             throw new RuntimeException(
                 Message::get(Message::DI_CONTAINER_READONLY, $id),

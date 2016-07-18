@@ -79,7 +79,7 @@ interface ResolverInterface
      * @param  string $id key/name
      * @param  mixed $definition classname/callable/array/object etc.
      * @param  array $args constructor/callable arguments
-     * @return $this
+     * @return bool true on success or false on failure
      * @throws LogicException if not writable
      * @access public
      */
@@ -87,7 +87,7 @@ interface ResolverInterface
         /*# string */ $id,
         $definition,
         array $args = []
-    );
+    )/*# : bool */;
 
     /**
      * Generate new id base on base node and section

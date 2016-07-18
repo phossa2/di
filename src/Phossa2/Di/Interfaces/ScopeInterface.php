@@ -45,10 +45,10 @@ interface ScopeInterface
     /**
      * Set container's default scope to either __SHARED__ or __SINGLE__
      *
-     * @param  bool $shared shared or not
+     * @param  bool $flag shared or not
      * @return $this
      * @access public
      * @api
      */
-    public function share(/*# bool */ $shared = true);
+    public function share(/*# bool */ $flag = true);
 }

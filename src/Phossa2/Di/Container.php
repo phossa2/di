@@ -123,13 +123,17 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
         ConfigInterface $config = null,
         /*# string */ $baseNode = 'di'
     ) {
-        // set resolver
-        $this->setResolver(
-            new Resolver($this, $config ?: new Config(), $baseNode)
-        );
+        // config
+        $conf = $config ?: new Config();
 
-        // set factory
-        $this->setFactory(new Factory($this->getResolver()));
+        // resolver & factory
+        $this
+            ->setResolver(new Resolver($this, $conf, $baseNode))
+            ->setFactory(new Factory($this->getResolver()));
+
+        // register couple objects
+        $this->register('container', $this);
+        $this->register('config', $conf);
 
         // run methods in 'di.init'
         $this->initContainer();
@@ -202,10 +206,24 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     /**
      * {@inheritDoc}
      */
-    public function param(/*# string */ $name, $value)
+    public function param(/*# string */ $name, $value)/*# : bool */
     {
-        $this->getResolver()->set((string) $name, $value);
-        return $this;
+        if (!$this->getResolver()->has($name)) {
+            $this->getResolver()->set($name, $value);
+            return $this->getResolver()->has($name);
+        }
+        return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function register(/*# string */ $id, $object)/*# : bool */
+    {
+        if ($this->isWritable() && !$this->has($id)) {
+            return $this->set($id, ['class' => $object, 'skip' => true]);
+        }
+        return false;
     }
 
     // AutoWiringInterface related
@@ -243,9 +261,9 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     /**
      * @inheritDoc
      */
-    public function share(/*# bool */ $shared = true)
+    public function share(/*# bool */ $flag = true)
     {
-        $this->default_scope = (bool) $shared ?
+        $this->default_scope = (bool) $flag ?
             self::SCOPE_SHARED : self::SCOPE_SINGLE;
         return $this;
     }
@@ -255,16 +273,15 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     /**
      * {@inheritDoc}
      */
-    public function set(/*# string */ $id, $value)
+    public function set(/*# string */ $id, $value)/*# : bool */
     {
         if ($this->isWritable()) {
             list($rawId, $scope) = $this->splitId($id);
 
-            $this->getResolver()->setService(
+            return $this->getResolver()->setService(
                 $rawId,
                 '' === $scope ? $value : $this->scopedData($value, $scope)
             );
-            return $this;
         } else {
             throw new RuntimeException(
                 Message::get(Message::DI_CONTAINER_READONLY, $id),

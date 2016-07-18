@@ -60,7 +60,7 @@ trait ArrayAccessTrait
 
     // WritableInterface related
     /**
-     * @return $this
+     * @return bool
      */
-    abstract public function set(/*# string */ $id, $value);
+    abstract public function set(/*# string */ $id, $value)/*# : bool */;
 }

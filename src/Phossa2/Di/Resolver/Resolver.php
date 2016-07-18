@@ -140,15 +140,14 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
         /*# string */ $id,
         $definition,
         array $args = []
-    ) {
+    )/*# : bool */ {
         if (!empty($args)) {
             $definition = [
                 'class' => $definition,
                 'args'  => $args
             ];
         }
-        $this->set($this->getSectionId($id), $definition);
-        return $this;
+        return $this->set($this->getSectionId($id), $definition);
     }
 
     /**
@@ -193,8 +192,7 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     protected function autoClassName(/*# string */ $id)/*# : bool */
     {
         if ($this->auto && class_exists($id) && $this->isWritable()) {
-            $this->setService($id, $id);
-            return true;
+            return $this->setService($id, $id);
         }
         return false;
     }

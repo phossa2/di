@@ -74,9 +74,22 @@ interface ExtendedContainerInterface extends AutoWiringInterface, ReferenceResol
      *
      * @param  string $name
      * @param  mixed $value
-     * @return $this
+     * @return bool true on success, false on failure
      * @access public
      * @api
      */
-    public function param(/*# string */ $name, $value);
+    public function param(/*# string */ $name, $value)/*# : bool */;
+
+    /**
+     * Register an object into the container without executing common methods
+     *
+     * $name may contain scope name
+     *
+     * @param  string $id
+     * @param  object $object
+     * @return bool true on success, false on failure
+     * @access public
+     * @api
+     */
+    public function register(/*# string */ $id, $object)/*# : bool */;
 }
