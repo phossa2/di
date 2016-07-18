@@ -131,9 +131,9 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
             ->setResolver(new Resolver($this, $conf, $baseNode))
             ->setFactory(new Factory($this->getResolver()));
 
-        // register couple objects
-        $this->register('container', $this);
-        $this->register('config', $conf);
+        // alias couple objects
+        $this->alias('container', $this);
+        $this->alias('config', $conf);
 
         // run methods in 'di.init'
         $this->initContainer();
@@ -218,7 +218,7 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     /**
      * {@inheritDoc}
      */
-    public function register(/*# string */ $id, $object)/*# : bool */
+    public function alias(/*# string */ $id, $object)/*# : bool */
     {
         if ($this->isWritable() && !$this->has($id)) {
             return $this->set($id, ['class' => $object, 'skip' => true]);

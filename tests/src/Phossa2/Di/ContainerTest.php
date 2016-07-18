@@ -32,7 +32,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get (use autowiring)
+     * Test get with autowiring
      *
      * @cover Phossa2\Di\Container::get()
      * @cover Phossa2\Di\Container::has()
@@ -44,10 +44,12 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get (use set())
+     * Test get() with set() and autowiring off
      *
      * @cover Phossa2\Di\Container::get()
      * @cover Phossa2\Di\Container::has()
+     * @cover Phossa2\Di\Container::set()
+     * @cover Phossa2\Di\Container::auto()
      */
     public function testGet2()
     {
@@ -70,7 +72,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get (use config)
+     * Test get() with config
      *
      * @cover Phossa2\Di\Container::get()
      * @cover Phossa2\Di\Container::has()
@@ -96,7 +98,7 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
      * @expectedException Phossa2\Di\Exception\NotFoundException
      * @expectedExceptionCode Phossa2\Di\Message\Message::DI_SERVICE_NOTFOUND
      */
-    public function testAuto()
+    public function testAuto1()
     {
         $this->object->auto(false);
         $this->assertFalse($this->object->has('MyCache'));
@@ -104,7 +106,22 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test mapping to a classname
+     * Test turn on/off autowiring
+     *
+     * @cover Phossa2\Di\Container::auto()
+     * @cover Phossa2\Di\Container::isAuto()
+     */
+    public function testAuto2()
+    {
+        $this->assertTrue($this->object->isAuto());
+        $this->object->auto(false);
+        $this->assertFalse($this->object->isAuto());
+        $this->object->auto(true);
+        $this->assertTrue($this->object->isAuto());
+    }
+
+    /**
+     * Test mapping to a classname string
      *
      * @cover Phossa2\Di\Container::set()
      */
@@ -180,6 +197,117 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
     public function testSet6()
     {
         $this->assertTrue($this->object->get('YourCache') instanceof \YourCache);
+    }
+
+    /**
+     * Test one()
+     *
+     * @cover Phossa2\Di\Container::one()
+     */
+    public function testOne1()
+    {
+        $cache1 = $this->object->get('MyCache');
+        $cache2 = $this->object->get('MyCache');
+        $cache3 = $this->object->one('MyCache');
+        $cache4 = $this->object->one('MyCache');
+
+        $this->assertTrue($cache1 === $cache2);
+        $this->assertTrue($cache1 !== $cache3);
+        $this->assertTrue($cache3 !== $cache4);
+
+        // with scope
+        $cache5 = $this->object->get('MyCache@myscope');
+        $cache6 = $this->object->get('MyCache@myscope');
+        $cache7 = $this->object->one('MyCache@myscope');
+        $cache8 = $this->object->one('MyCache@myscope');
+
+        $this->assertTrue($cache1 !== $cache5);
+        $this->assertTrue($cache5 === $cache6);
+        $this->assertTrue($cache5 !== $cache7);
+        $this->assertTrue($cache7 !== $cache8);
+    }
+
+    /**
+     * Test run()
+     *
+     * @cover Phossa2\Di\Container::run()
+     * @cover Phossa2\Di\Container::param()
+     */
+    public function testRun1()
+    {
+        $this->expectOutputString('test_wow_xx_');
+
+        // php function
+        $this->object->run('printf', ['test_']);
+
+        // callable
+        $this->object->run(function() { echo 'wow_'; });
+
+        // pseudo callable
+        $this->object->param('method', 'echoIt');
+        $this->object->param('string', 'xx_');
+        $this->object->run(['${#MyCache}', '${method}'], ['${string}']);
+    }
+
+    /**
+     * Test alias(), always pointing to the same instance
+     *
+     * @cover Phossa2\Di\Container::alias()
+     */
+    public function testAlias()
+    {
+        // alias
+        $this->object->alias('cache1', '${#MyCache}');
+
+        // shared instance
+        $cache = $this->object->get('MyCache');
+
+        $this->assertTrue($this->object->get('cache1') === $cache);
+
+        // alias with scope, still same
+        $this->object->alias('cache2@myscope', '${#MyCache}');
+        $this->assertTrue($this->object->get('cache2') === $cache);
+
+        // can NOT alias with same name (even scope is different)
+        $this->assertFalse($this->object->alias('cache2', '${#MyCache}'));
+        $this->assertTrue($this->object->get('cache2') === $cache);
+
+        // scoped instance
+        $cacheScoped = $this->object->get('MyCache@myscope');
+
+        $this->assertTrue($cache !== $cacheScoped);
+
+        // alias scoped
+        $this->object->alias('cache3', '${#MyCache@myscope}');
+        $this->assertTrue($this->object->get('cache3') === $cacheScoped);
+    }
+
+    /**
+     * Test share
+     *
+     * @cover Phossa2\Di\Container::share()
+     */
+    public function testShare()
+    {
+        $cache1 = $this->object->get('MyCache');
+        $cache2 = $this->object->get('MyCache');
+
+        $this->assertTrue($cache1 === $cache2);
+
+        $cache3 = $this->object->one('MyCache');
+
+        // different
+        $this->assertTrue($cache1 !== $cache3);
+
+        // but driver is same
+        $this->assertTrue($cache1->getDriver() === $cache3->getDriver());
+
+        $this->object->share(false);
+
+        $cache4 = $this->object->get('MyCache');
+        $cache5 = $this->object->get('MyCache');
+
+        $this->assertTrue($cache4 !== $cache5);
     }
 
     /**
@@ -290,5 +418,25 @@ class ContainerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue(isset($container['A']));
         $this->assertTrue($delegator['A'] === $container['A']);
+    }
+
+    /**
+     * Test setWritable() & isWritable()
+     *
+     * @cover Phossa2\Di\Container::setWritable()
+     * @cover Phossa2\Di\Container::isWritable()
+     */
+    public function testIsWritable()
+    {
+        $container = new Container();
+
+        // default is writable
+        $this->assertTrue($container->isWritable());
+
+        // set readonly
+        $this->assertTrue($container->setWritable(false));
+
+        // now not writable
+        $this->assertFalse($container->isWritable());
     }
 }

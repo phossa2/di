@@ -15,10 +15,6 @@ return [
         'driver' => 'MyCacheDriver',
     ],
 
-    // interface/classname mappings
-    'di.mapping' => [
-    ],
-
     // init methods to run after container created
     'di.init' => [
         // different sections

@@ -129,8 +129,8 @@ Usage
 - With configuration from files or array
 
   Container uses a `Phossa2\Config\Interfaces\ConfigInterface` instance as its
-  definition resolver for both parameters and services. The config instance may
-  either read configs from files or get configs from an array as follows,
+  definition resolver for parameter and service definitions. The config instance
+  may either read configs from files or get configs from an array as follows,
 
   ```php
   use Phossa2\Di\Container;
@@ -146,23 +146,23 @@ Usage
           'driver' => 'MyCacheDriver',
       ],
 
-      // common methods to run after instantiation
+      // common methods to run after each instantiation
       'di.common' => [
           [
-            function($obj) { return $obj instanceof \MyCacheDriver; },
-            function($obj, $container) { echo "ok"; }
+            function($obj) { return $obj instanceof \MyCacheDriver; }, // tester
+            function($obj, $container) { echo "ok"; } // runner
           ],
       ],
 
       // init methods after container created
       'di.init' => [
-            // default methods
+            // default section
             'default' => [
                 ['setLogger', ['${#logger}']],
                 // ...
             ],
 
-            // mystuff section
+            // my own section
             'mystuff' => [
             ],
       ],
@@ -189,8 +189,12 @@ Features
 
 - <a name="ref"></a>**References**
 
-  References in the format of '${reference}' can be used to refer to predefined
+  References in the form of '${reference}' can be used to refer to predefined
   parameters from the config or services in the container.
+
+  **Characters of `'$', '{', '}', '.'` are not allowed in reference name**.
+  Characters of `'#', '@'` have special meanings, such that should not be part
+  of *normal* service names.
 
   - <a name="pref"></a>Parameter references
 
@@ -641,9 +645,9 @@ APIs
     Set a parameter in the container's config tree for later to be used as a
     reference. Returns a bool value to indicate status.
 
-  - `register(string $id, object $object): bool` from *ExtendedContainerInterface*
+  - `alias(string $id, object|string $object): bool` from *ExtendedContainerInterface*
 
-    Inject an object as `$id` into the container. Difference with `set()` method
+    Aliasing an object as `$id` in the container. Difference with `set()` method
     is that getting this object will skip the execution of common methods.
 
     Returns `true` on success and `false` on failure.
@@ -717,9 +721,9 @@ APIs
   - `setWritable(bool $writable): bool` from *WritableInterface*
 
     Set this delegator writable or readonly.
-    
+
   - `addContainer(ContainerInterface $container): $this` from *DelegatorInterface*
-  
+
     Add a container to the delegator.
 
 Dependencies

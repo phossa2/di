@@ -16,6 +16,10 @@ class MyCache
     public function runMethod1() {
         echo "runMethod1_";
     }
+
+    public function echoIt($str) {
+        echo $str;
+    }
 }
 
 class MyCacheDriver implements DriverInterface

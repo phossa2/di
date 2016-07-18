@@ -86,10 +86,10 @@ interface ExtendedContainerInterface extends AutoWiringInterface, ReferenceResol
      * $name may contain scope name
      *
      * @param  string $id
-     * @param  object $object
+     * @param  object|string $object or a valid service reference
      * @return bool true on success, false on failure
      * @access public
      * @api
      */
-    public function register(/*# string */ $id, $object)/*# : bool */;
+    public function alias(/*# string */ $id, $object)/*# : bool */;
 }
