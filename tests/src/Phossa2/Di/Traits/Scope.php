@@ -32,4 +32,8 @@ class Scope implements ScopeInterface {
     protected function getResolver()/*# : ResolverInterface */
     {
     }
+
+    public function share(/*# bool */ $flag = true)
+    {
+    }
 }
