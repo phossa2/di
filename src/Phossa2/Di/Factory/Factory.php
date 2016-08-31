@@ -56,7 +56,6 @@ class Factory extends ObjectAbstract implements FactoryInterface
 
         if (is_string($def['class'])) {
             $obj = $this->constructObject($def['class'], $args);
-
         } else {
             $obj = $this->executeCallable($def['class'], $args);
         }

@@ -108,7 +108,6 @@ trait FactoryHelperTrait
 
             if ($this->isTypeMatched($class, $providedArguments)) {
                 $resolvedArguments[$i] = array_shift($providedArguments);
-
             } elseif ($this->isRequiredClass($param, $providedArguments)) {
                 $resolvedArguments[$i] = $this->getObjectByClass($class->getName());
             }

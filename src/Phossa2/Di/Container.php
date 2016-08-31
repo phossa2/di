@@ -188,7 +188,8 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     public function one(/*# string */ $id, array $arguments = [])
     {
         return $this->get(
-            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE), $arguments
+            $this->scopedId($id, ScopeInterface::SCOPE_SINGLE),
+            $arguments
         );
     }
 
