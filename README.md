@@ -1,10 +1,11 @@
 # phossa2/di
 [![Build Status](https://travis-ci.org/phossa2/di.svg?branch=master)](https://travis-ci.org/phossa2/di)
 [![Code Quality](https://scrutinizer-ci.com/g/phossa2/di/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/phossa2/di/)
+[![Code Climate](https://codeclimate.com/github/phossa2/di/badges/gpa.svg)](https://codeclimate.com/github/phossa2/di)
 [![PHP 7 ready](http://php7ready.timesplinter.ch/phossa2/di/master/badge.svg)](https://travis-ci.org/phossa2/di)
 [![HHVM](https://img.shields.io/hhvm/phossa2/di.svg?style=flat)](http://hhvm.h4cc.de/package/phossa2/di)
 [![Latest Stable Version](https://img.shields.io/packagist/vpre/phossa2/di.svg?style=flat)](https://packagist.org/packages/phossa2/di)
-[![License](https://poser.pugx.org/phossa2/di/license)](http://mit-license.org/)
+[![License](https://img.shields.io/:license-mit-blue.svg)](http://mit-license.org/)
 
 **phossa2/di** is a *fast* and *powerful* [Container-Interop][Interop] or
 [PSR-11][PSR-11] implementation of dependency injection library for PHP. It
@@ -37,7 +38,7 @@ or add the following lines to your `composer.json`
 ```json
 {
     "require": {
-       "phossa2/di": "^2.0.0"
+       "phossa2/di": "2.*"
     }
 }
 ```
@@ -726,6 +727,23 @@ APIs
 
     Add a container to the delegator.
 
+Change log
+---
+
+Please see [CHANGELOG](CHANGELOG.md) from more information.
+
+Testing
+---
+
+```bash
+$ composer test
+```
+
+Contributing
+---
+
+Please see [CONTRIBUTE](CONTRIBUTE.md) for more information.
+
 Dependencies
 ---
 
@@ -733,7 +751,7 @@ Dependencies
 
 - phossa2/config >= 2.0.12
 
-- phossa2/shared >= 2.0.19
+- phossa2/shared >= 2.0.21
 
 License
 ---
