@@ -22,6 +22,7 @@ use Phossa2\Config\Interfaces\ConfigInterface;
 use Phossa2\Config\Delegator as ConfigDelegator;
 use Phossa2\Shared\Reference\ReferenceInterface;
 use Phossa2\Di\Interfaces\ReferenceResolveInterface;
+use Phossa2\Di\Interfaces\AutoTranslationInterface;
 
 /**
  * Resolver
@@ -34,10 +35,11 @@ use Phossa2\Di\Interfaces\ReferenceResolveInterface;
  * @see     ResolverInterface
  * @see     AutoWiringInterface
  * @see     ReferenceResolveInterface
- * @version 2.0.0
+ * @version 2.1.0
  * @since   2.0.0 added
+ * @since   2.1.0 added AutoTranslationInterface
  */
-class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringInterface, ReferenceResolveInterface
+class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringInterface, AutoTranslationInterface, ReferenceResolveInterface
 {
     /**
      * The config for object resolving
@@ -70,6 +72,14 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      * @access protected
      */
     protected $auto = true;
+
+    /**
+     * For service translation
+     *
+     * @var    bool
+     * @access protected
+     */
+    protected $trans = true;
 
     /**
      * @param  Container $container
@@ -123,13 +133,27 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
      * Autowiring support added
      *
      * {@inheritDoc}
+     * @since  2.1.0 added service translation
      */
     public function hasService(/*# string */ $id = '')/*# : bool */
     {
         $sid = $this->getSectionId($id);
-        if ($this->has($sid) || $this->autoClassName($id)) {
+
+        // direct match
+        if ($this->has($sid)) {
             return true;
         }
+
+        // autoclass
+        if ($this->autoClassName($id)) {
+            return true;
+        }
+
+        // translation
+        if ($this->serviceTranslation($id)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -179,6 +203,17 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @since  2.1.0 added
+     */
+    public function translation(/*# bool */ $flag = true)
+    {
+        $this->trans = (bool) $flag;
+        return $this;
+    }
+
+    /**
      * Returns true if
      *
      * 1) autowiring is true
@@ -195,5 +230,53 @@ class Resolver extends ConfigDelegator implements ResolverInterface, AutoWiringI
             return $this->setService($id, $id);
         }
         return false;
+    }
+
+    /**
+     * if 'di.service.storage' not found, try 'storage.di。storage'
+     *
+     * @param  string $id
+     * @return bool
+     * @access protected
+     * @since  2.1.0 added
+     */
+    protected function serviceTranslation(/*# string */ $id)/*# : bool */
+    {
+        // no translation allowed
+        if (!$this->trans) {
+            return false;
+        }
+
+        // translate to 'storage.di' & 'storage.di.storage'
+        $newSec = $id . '.' . $this->base_node;
+        $newId  = $newSec . '.' . $id;
+
+        // check 'storage.di.storage' in config
+        if ($this->config_resolver->has($newId) &&
+            method_exists($this->config_resolver, 'enableDeReference')
+        ) {
+            $data = $this->getRawConfig($newSec);
+            foreach ($data as $xId => $xDef) {
+                $this->set($this->getSectionId($xId), $xDef);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get not-dereferenced config from config_resolver
+     *
+     * @param  string $id
+     * @return array
+     * @access protected
+     */
+    protected function getRawConfig(/*# string */ $id)
+    {
+        $this->config_resolver->enableDeReference(false);
+        $data = $this->config_resolver->get($id);
+        $this->config_resolver->enableDeReference(true);
+        return $data;
     }
 }

@@ -78,8 +78,9 @@ use Phossa2\Shared\Delegator\DelegatorAwareInterface;
  * @see     DelegatorAwareInterface
  * @see     WritableInterface
  * @see     \ArrayAccess
- * @version 2.0.0
+ * @version 2.1.0
  * @since   2.0.0 added
+ * @since   2.1.0 added `translation()`
  */
 class Container extends ObjectAbstract implements ContainerInterface, ScopeInterface, WritableInterface, \ArrayAccess, DelegatorAwareInterface, ExtendedContainerInterface
 {
@@ -244,6 +245,19 @@ class Container extends ObjectAbstract implements ContainerInterface, ScopeInter
     public function isAuto()/*# : bool */
     {
         return $this->getResolver()->isAuto();
+    }
+
+    // AutoTranslationInterface related
+
+    /**
+     * {@inheritDoc}
+     *
+     * @since  2.1.0 added
+     */
+    public function translation(/*# bool */ $flag = true)
+    {
+        $this->getResolver()->translation($flag);
+        return $this;
     }
 
     // ReferenceResolveInterface related

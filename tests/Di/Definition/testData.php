@@ -1,9 +1,9 @@
 <?php
 
-class A implements AInterface {
+class AClass implements AnInterface {
 
 }
 
-interface AInterface {
+interface AnInterface {
 
 }

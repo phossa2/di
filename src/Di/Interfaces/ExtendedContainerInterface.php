@@ -26,10 +26,11 @@ use Phossa2\Di\Exception\RuntimeException;
  * @author  Hong Zhang <phossa@126.com>
  * @see     AutoWiringInterface
  * @see     ReferenceResolveInterface
- * @version 2.0.0
+ * @version 2.1.0
  * @since   2.0.0 added
+ * @since   2.1.0 added AutoTranslationInterface
  */
-interface ExtendedContainerInterface extends AutoWiringInterface, ReferenceResolveInterface
+interface ExtendedContainerInterface extends AutoWiringInterface, AutoTranslationInterface, ReferenceResolveInterface
 {
     /**
      * Get a NEW service instance

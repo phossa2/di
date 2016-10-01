@@ -7,6 +7,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 - Added
 
+  - 2016-10-01 added `AutoTranslationInterface`
   - 2016-09-30 added `Service` locator
 
 - Changed

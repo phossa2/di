@@ -21,11 +21,12 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
         require_once __DIR__ .'/testData.php';
 
         parent::setUp();
-        $container = new Container(new Config(
+        $this->object = new Container(new Config(
             new ConfigFileLoader(__DIR__ . '/data')
         ));
 
-        $this->object = $container->getResolver();
+        $resolver = $this->invokeMethod('getResolver');
+        $this->object = $resolver;
     }
 
     /**
@@ -49,6 +50,23 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
         $property->setAccessible(true);
 
         return $property->getValue($this->object);
+    }
+
+    /**
+     * Call protected/private method of a class.
+     *
+     * @param string $methodName Method name to call
+     * @param array  $parameters Array of parameters to pass into method.
+     *
+     * @return mixed Method return.
+     */
+    protected function invokeMethod($methodName, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass($this->object);
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($this->object, $parameters);
     }
 
     /**
@@ -91,19 +109,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get in section
-     *
-     * @cover Phossa2\Di\Definition\Resolver::getInSection()
-     */
-    public function testGetInSection()
-    {
-        $this->assertEquals(
-            Delegator::getClassName(),
-            $this->object->getInSection('delegator.class', 'service')
-        );
-    }
-
-    /**
      * Test has
      *
      * @cover Phossa2\Di\Definition\Resolver::has()
@@ -122,14 +127,33 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test has in section
+     * Test get in section
      *
-     * @cover Phossa2\Di\Definition\Resolver::hasInSection()
+     * @cover Phossa2\Di\Definition\Resolver::getSectionId()
      */
-    public function testHasInSection()
+    public function testGetSectionId()
     {
+        $this->assertEquals(
+            'di.service.test',
+            $this->object->getSectionId('test')
+        );
+    }
+
+    /**
+     * Test has service definition
+     *
+     * @cover Phossa2\Di\Definition\Resolver::hasService()
+     */
+    public function testHasService()
+    {
+        // full patch
         $this->assertTrue(
-            $this->object->hasInSection('delegator.class', 'service')
+            $this->object->hasService('delegator.class')
+        );
+
+        // return FALSE if not found
+        $this->assertFalse(
+            $this->object->hasService('no.such.node')
         );
     }
 
@@ -156,23 +180,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test set in section
-     *
-     * @cover Phossa2\Di\Definition\Resolver::setInSection()
-     */
-    public function testSetInSection()
-    {
-        $this->assertFalse(
-            $this->object->hasInSection('no.such.node', 'mapping')
-        );
-        $this->object->setInSection('no.such.node', 'mapping', '10');
-        $this->assertEquals(
-            '10',
-            $this->object->getInSection('no.such.node', 'mapping')
-        );
-    }
-
-    /**
      * Test get service definition
      *
      * @cover Phossa2\Di\Definition\Resolver::getService()
@@ -189,24 +196,6 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             null,
             $this->object->getService('no.such.node')
-        );
-    }
-
-    /**
-     * Test has service definition
-     *
-     * @cover Phossa2\Di\Definition\Resolver::hasService()
-     */
-    public function testHasService()
-    {
-        // full patch
-        $this->assertTrue(
-            $this->object->hasService('delegator.class')
-        );
-
-        // return FALSE if not found
-        $this->assertFalse(
-            $this->object->hasService('no.such.node')
         );
     }
 
@@ -233,75 +222,27 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test get mapping definition
-     *
-     * @cover Phossa2\Di\Definition\Resolver::getMapping()
-     */
-    public function testGetMapping()
-    {
-        // full patch
-        $this->assertEquals(
-            'AClass',
-            $this->object->getMapping('AnInterface')
-        );
-
-        // return NULL if not found
-        $this->assertEquals(
-            null,
-            $this->object->getMapping('no.such.node')
-        );
-    }
-
-    /**
-     * Test has mapping definition
-     *
-     * @cover Phossa2\Di\Definition\Resolver::hasMapping()
-     */
-    public function testHasMapping()
-    {
-        // full patch
-        $this->assertTrue(
-            $this->object->hasMapping('AnInterface')
-        );
-
-        // return FALSE if not found
-        $this->assertFalse(
-            $this->object->hasMapping('no.such.node')
-        );
-    }
-
-    /**
-     * Test set mapping definition
-     *
-     * @cover Phossa2\Di\Definition\Resolver::setMapping()
-     */
-    public function testSetMapping()
-    {
-        // not found
-        $this->assertFalse(
-            $this->object->hasMapping('no.such.node')
-        );
-
-        // add it
-        $this->object->setMapping('no.such.node', 'wow');
-
-        // found now
-        $this->assertEquals(
-            'wow',
-            $this->object->getMapping('no.such.node')
-        );
-    }
-
-    /**
      * Test autowiring mode
      *
-     * @cover Phossa2\Di\Definition\Resolver::autoWiring()
+     * @cover Phossa2\Di\Definition\Resolver::auto()
      */
-    public function testAutoWiring()
+    public function testAuto()
     {
         $this->assertEquals(true, $this->getPrivateProperty('auto'));
-        $this->object->autoWiring(false);
+        $this->object->auto(false);
         $this->assertEquals(false, $this->getPrivateProperty('auto'));
+    }
+
+    /**
+     * Test autotranslation
+     *
+     * @cover Phossa2\Di\Definition\Resolver::translation()
+     */
+    public function testTranslation()
+    {
+        $this->assertEquals(true, $this->getPrivateProperty('trans'));
+        $this->object->translation(false);
+        $this->assertEquals(false, $this->getPrivateProperty('trans'));
     }
 
     /**
@@ -311,20 +252,40 @@ class ResolverTest extends \PHPUnit_Framework_TestCase
      */
     public function testAutoClassName()
     {
-        // turn off autowiring
-        $this->object->autoWiring(false);
+        // turn off auto wiring
+        $this->object->auto(false);
 
         // is 'A' defined ?
         $this->assertFalse($this->object->hasService('A'));
 
         // turn on autowiring
-        $this->object->autoWiring(true);
+        $this->object->auto(true);
 
         // is 'A' defined ?
         $this->assertTrue($this->object->hasService('A'));
         $this->assertEquals(
-            ['class'=> 'A'],
+            'A',
             $this->object->getService('A')
         );
+    }
+
+    /**
+     * Test translation
+     *
+     * @cover Phossa2\Di\Definition\Resolver::serviceTranslation
+     */
+    public function testServiceTranslation()
+    {
+        // turn off translation
+        $this->object->translation(false);
+
+        // is 'di.service.test' defined ?
+        $this->assertFalse($this->object->hasService('test'));
+
+        // turn on translation
+        $this->object->translation(true);
+
+        // 'di.service.delegator' translated to 'delegator.di.delegator'
+        $this->assertTrue($this->object->hasService('test'));
     }
 }
