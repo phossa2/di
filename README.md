@@ -1,4 +1,7 @@
-# phossa2/di
+# phossa2/di [ABANDONED]
+
+**PLEASE USE [phoole/di](https://github.com/phoole/di) library instead**
+
 [![Build Status](https://travis-ci.org/phossa2/di.svg?branch=master)](https://travis-ci.org/phossa2/di)
 [![Code Quality](https://scrutinizer-ci.com/g/phossa2/di/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/phossa2/di/)
 [![Code Climate](https://codeclimate.com/github/phossa2/di/badges/gpa.svg)](https://codeclimate.com/github/phossa2/di)
